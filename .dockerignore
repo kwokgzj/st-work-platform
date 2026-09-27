@@ -1,0 +1,10 @@
+.git
+.multica
+.pi
+.venv
+node_modules
+data
+**/__pycache__
+*.pyc
+.DS_Store
+*.db

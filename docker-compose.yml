@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./data:/app/data"   # 数据落盘持久化，重启/重建容器不丢
+    restart: unless-stopped

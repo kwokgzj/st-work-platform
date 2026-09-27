@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>學前兒童口語評估量表</title>
+<link rel="stylesheet" href="https://unpkg.com/element-plus@2/dist/index.css">
+<style>
+  [v-cloak]{display:none}
+  /* ══ 臨床藍主題 ══ */
+  :root{
+    --el-color-primary:#2e5e9e;
+    --el-color-primary-light-3:#5d84bd;
+    --el-color-primary-light-5:#96afda;
+    --el-color-primary-light-7:#bfcfe8;
+    --el-color-primary-light-8:#d5e0f1;
+    --el-color-primary-light-9:#eaf0f9;
+    --el-color-primary-dark-2:#254b80;
+    --el-border-radius-base:8px;
+    --el-card-border-radius:14px;
+  }
+  body{margin:0;background:linear-gradient(180deg,#edf2f8 0%,#f5f7fa 320px);font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;color:#303133;font-size:14px}
+
+  /* ══ 頂部橫幅 ══ */
+  .el-header.banner{background:linear-gradient(120deg,#1c3a66 0%,#2e5e9e 55%,#3d6fb0 100%);color:#fff;height:auto!important;padding:20px 32px 17px;box-shadow:0 2px 12px rgba(28,58,102,.28)}
+  .banner .brand{font-size:20px;font-weight:700;letter-spacing:2px}
+  .banner .sub{font-size:12px;opacity:.82;margin-top:4px;letter-spacing:.8px}
+
+  /* ══ 兒童資料列 ══ */
+  .el-header.metabar{background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--el-border-color-lighter);box-shadow:0 1px 6px rgba(16,42,84,.05);height:auto!important;padding:12px 32px;position:sticky;top:0;z-index:100}
+  .meta-form .el-form-item{margin:0 18px 0 0}
+
+  /* ══ 年齡篩選工具列 ══ */
+  .toolbar{background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--el-border-color-lighter);box-shadow:0 2px 10px rgba(16,42,84,.05);padding:12px 32px;position:sticky;top:57px;z-index:99}
+  .toolbar-row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+  .toolbar .el-check-tag{border-radius:999px;padding:5px 16px;font-size:13px;border:1px solid var(--el-border-color-lighter);font-weight:500;transition:all .18s}
+  .toolbar .el-check-tag:hover{border-color:var(--el-color-primary-light-5);color:var(--el-color-primary)}
+  .toolbar .el-check-tag.is-checked{background:var(--el-color-primary);color:#fff;border-color:var(--el-color-primary)}
+
+  /* ══ 主內容：卡片與留白 ══ */
+  .el-main{padding:26px 32px 90px!important}
+  .plan-ws{display:flex;gap:18px;align-items:flex-start}
+  .plan-left{flex:1.35;min-width:0}
+  .plan-right{flex:1;min-width:300px;display:flex;flex-direction:column;border:1px solid var(--el-border-color-lighter);border-radius:12px;padding:14px;background:#fbfcfe;position:sticky;top:110px}
+  .ver-list{display:flex;flex-wrap:wrap;gap:8px}
+  .ver{border:1.5px solid var(--el-border-color);background:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12.5px;color:var(--el-text-color-regular);transition:.12s}
+  .ver:hover{border-color:var(--el-color-primary)}
+  .ver.on{background:var(--el-color-primary);border-color:var(--el-color-primary);color:#fff;font-weight:600}
+  .goal-title{font-weight:600;margin-right:8px}
+  .game-row{display:flex;gap:10px;align-items:flex-start;margin:10px 0;padding:10px;background:#f8fafc;border:1px solid var(--el-border-color-lighter);border-radius:10px}
+  .game-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .chat-box{height:430px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:10px;background:#f4f6fa;border-radius:10px}
+  .msg{max-width:88%;padding:9px 13px;border-radius:12px;line-height:1.75;font-size:13px;white-space:pre-wrap;word-break:break-word}
+  .msg.user{align-self:flex-end;background:var(--el-color-primary);color:#fff;border-bottom-right-radius:3px}
+  .msg.assistant{align-self:flex-start;background:#fff;border:1px solid var(--el-border-color-lighter);border-bottom-left-radius:3px}
+  .final-box{margin-top:16px;background:#f0f9eb;border:1px solid #e1f3d8;border-radius:12px;padding:14px 20px}
+  .el-collapse-item__content{padding-bottom:14px}
+  .el-main .el-card{margin-bottom:22px;border-radius:14px;border:1px solid var(--el-border-color-lighter);box-shadow:0 1px 2px rgba(16,42,84,.04),0 6px 20px rgba(16,42,84,.05)}
+  .el-main .el-card__body{padding:22px 28px}
+  .el-card__header{padding:16px 28px;border-bottom:1px solid var(--el-border-color-lighter)}
+  .el-table{border-radius:10px}
+  .el-table .el-textarea__inner{box-shadow:none!important;border-radius:6px;line-height:1.7;font-size:13px;padding:5px 9px}
+  .el-table td.el-table__cell{vertical-align:top}
+
+  /* ══ 分組標題 ══ */
+  .grp-h{font-weight:600;font-size:15px;color:#1f2d3d;margin:26px 0 12px;padding-left:11px;border-left:3.5px solid var(--el-color-primary);line-height:1.45;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .grp-h:first-child{margin-top:2px}
+  .grp-h .el-tag{font-weight:400}
+  .grp-h .selall{margin-left:auto;font-size:12.5px}
+  .note{color:var(--el-text-color-secondary);font-size:12.5px;margin:2px 0 10px;line-height:1.8}
+
+  /* ══ 三狀態項目：圓角膠囊 ══ */
+  .items{display:flex;flex-wrap:wrap;gap:12px 14px;line-height:1;padding:2px 0 6px}
+  .el-tag.st{cursor:pointer;user-select:none;border-radius:999px;height:auto;padding:8px 16px;font-size:13.5px;line-height:1.45;border-width:1px;text-align:left;transition:transform .16s,box-shadow .16s,border-color .16s,background-color .16s}
+  .el-tag.st:hover{transform:translateY(-1.5px);box-shadow:0 4px 12px rgba(46,94,158,.16);border-color:var(--el-color-primary-light-3)}
+  .el-tag.st:active{transform:translateY(0);box-shadow:none}
+  .el-tag.st.s2{font-weight:600}
+  .st.dim{opacity:.18;filter:grayscale(.7);pointer-events:none}
+  .el-divider{margin:22px 0}
+
+  .footer{max-width:1280px;margin:0 auto;padding:0 32px 44px;color:var(--el-text-color-secondary);font-size:12px;text-align:center;line-height:1.8}
+
+  /* ══ 報告 ══ */
+  #repDoc{background:#fff;padding:48px 60px;min-height:400px}
+  #repDoc [contenteditable]{border:1px dashed var(--el-border-color);border-radius:8px;padding:8px 12px;line-height:1.9;min-height:22px;transition:border-color .15s}
+  #repDoc [contenteditable]:hover{border-color:var(--el-color-primary-light-5)}
+  #repDoc [contenteditable]:focus{outline:2px solid var(--el-color-primary-light-5);border-style:solid}
+  .rep-org{text-align:center;font-size:18px;font-weight:700;letter-spacing:1px}
+  .rep-title{text-align:center;font-size:23px;font-weight:700;margin:6px 0 16px;letter-spacing:4px;color:var(--el-color-primary-dark-2)}
+  .rep-meta{display:flex;flex-wrap:wrap;gap:8px 30px;margin:14px 0;font-size:14px;background:#f8fafc;border:1px solid var(--el-border-color-lighter);border-radius:10px;padding:12px 18px}
+  .rep-meta b{color:#8a94a3;font-weight:600;margin-right:6px}
+  .rep-h{font-size:16px;font-weight:700;color:var(--el-color-primary);margin:26px 0 10px;border-bottom:2px solid var(--el-color-primary-light-8);padding-bottom:6px}
+  .rep-blk{margin:10px 0}
+  #repDoc table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px;border-radius:10px;overflow:hidden}
+  #repDoc th,#repDoc td{border:1px solid #d8e0ec;padding:9px 12px;text-align:left;vertical-align:top;line-height:1.8}
+  #repDoc th{background:var(--el-color-primary-light-9);color:var(--el-color-primary);font-weight:600}
+  .rep-intro{margin:14px 0;line-height:2}
+  .rev:empty::before{content:attr(data-ph);color:#c0c4cc}
+  .rep-sign{display:flex;justify-content:flex-end;gap:60px;margin-top:34px;padding:0 20px}
+  .rep-sign .sig{min-width:200px}
+  .rep-sign .lab{font-size:12px;color:#8a94a3;letter-spacing:2px;margin-bottom:30px}
+  .rep-sign .val{border-bottom:1.5px solid #7d8ba1;padding:0 12px 5px;min-height:30px;font-weight:600;letter-spacing:1px;line-height:1.6}
+  .ra{display:flex;gap:9px;margin:6px 0;align-items:flex-start;line-height:1.8}
+  .ra-b{flex:none;font-size:12px;font-weight:600;padding:1px 10px;border-radius:6px;margin-top:3px;white-space:nowrap}
+  .ra-t{flex:1;min-width:0}
+  .ra.ok>.ra-b{background:var(--el-color-primary-light-9);color:var(--el-color-primary)}
+  .ra.hint>.ra-b{background:#fdf3e3;color:#a4700f}
+  .ra.need>.ra-b{background:#fdecec;color:#bb4a4a}
+  .ra.none>.ra-b{background:#f4f4f5;color:#909399}
+  .ra.next>.ra-b{background:var(--el-color-primary);color:#fff}
+  .ra.next{margin-top:9px}
+  .ra.next .ra-t{font-weight:600}
+
+  /* ══ 列印評估表 ══ */
+  @media print{
+    body{background:#fff}
+    .no-print{display:none!important}
+    .el-header.metabar{position:static;border:none;box-shadow:none}
+    .el-header.banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .st,.el-tag,.el-check-tag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body.compact .st.s0{display:none}
+    .el-main .el-card{box-shadow:none;break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div id="app" v-cloak></div></div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://unpkg.com/element-plus@2/dist/index.full.min.js"></script>
+<script src="https://unpkg.com/element-plus@2/dist/locale/zh-cn.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+const {createApp, reactive, ref, computed, watch, nextTick} = Vue;
+
+// ── 題庫：[最高適用年齡(歲), 項目文字]，d=報告歸屬範疇 ──
+const I = (a,t)=>({a,t,s:0});
+const PAGES = [
+{tab:'rec', label:'一、理解能力', title:'一、理解能力 (Receptive Language)', desc:'日常指令、問題理解及語言概念的處理能力', groups:[
+  {h:'1. 問題理解', d:'rec', tag:'按年齡', items:[
+    I(2,'係唔係? (A-not-A)'),I(2,'有無? (Y/N)'),I(2,'X 定 Y? (二選一)'),
+    I(2,'邊個? (Who)'),I(2,'甚麼? (What)'),I(2,'邊度? (Where)'),
+    I(3,'點解? (Why, basic)'),I(3,'幾多? (How many)'),
+    I(3,'邊個嘅? (Whose)'),I(3,'點樣? (How)'),I(3,'否定問句（甚麼唔係裡面?）'),
+    I(4,'幾時? (When)'),I(4,'被動句式問題「罐汽水俾邊個飲咗?」')]},
+  {h:'日常指令', d:'rec', tag:'0.5 歲起', items:[
+    I(0,'自己名字'),I(0,'否定句（唔係／唔好／唔可以）'),I(0,'社交常規（hello／拜拜）'),I(0,'環境指令（坐／擺／望住／收埋）'),I(1,'「收埋、唔准……」反應')]},
+  {h:'單詞理解', d:'rec', tag:'10–18 個月', items:[
+    I(1,'名詞：食物（蘋果・橙・餅・包）'),I(1,'名詞：動物（狗・豬・貓）'),I(1,'名詞：玩具（車・巴士・波）'),I(1,'名詞：餐具（刀・碗・羹）'),I(1,'身體部位（眼・耳・口・鼻）'),
+    I(1,'動詞／指令 1-CE（俾・擺・推・切・洗・食・抹・飲・拍・舉）'),I(1,'明白約 20 個詞語')]},
+  {h:'語用概念', d:'rec', tag:'10–18 個月', items:[
+    I(1,'我嘅／你嘅／佢嘅 (possession)'),I(1,'再要 (recurrence)'),I(1,'唔係／唔要 (rejection)'),I(1,'無 (disappearance / nonexistence)')]},
+  {h:'2-CE 雙元素指令', d:'rec', tag:'1.5–2 歲', items:[
+    I(1,'名詞＋動詞 (SV)：姐姐食'),I(1,'動詞＋物件 (VO)：飲橙汁'),I(1,'動詞＋地方 (VA)：擺盒度')]},
+  {h:'單詞擴展', d:'rec', tag:'1.5–2 歲', items:[
+    I(1,'名詞：傢私（枱・凳・床・門）'),I(1,'名詞：身體部分（手・腳・頭・肚）'),I(1,'名詞：人物（媽媽・爸爸・哥哥・姐姐）'),I(1,'名詞：個人用品（梳・牙刷・杯・筆）'),
+    I(1,'物件用途（梳頭・切野・飲水・抹枱・寫字）'),I(1,'功用性問題「用咩切橙?」')]},
+  {h:'形容詞 / 方位概念', d:'rec', tag:'2 歲起', items:[
+    I(2,'方位詞：上、下'),I(2,'尺寸：大、小'),I(2,'方位詞：上、下、裡、外'),I(3,'方位詞：前、後、旁邊'),
+    I(4,'形容詞：長短・軟硬・多少・重輕'),I(4,'時間詞：今日・之前・之後・上星期')]},
+  {h:'指令長度', d:'rec', tag:'按年齡', items:[
+    I(2,'2-ICW：「拎蘋果同提子」'),I(2,'2-ICW：VOO 俾羹¹狗仔²'),I(2,'2-ICW：VOA 擺羹¹係碟²度'),I(2,'兩步驟指令：首先……跟住……'),
+    I(3,'3-ICW (modifier)：俾藍色羹¹俾豬仔²'),I(3,'3-ICW (locative)：擺叉¹喺凳²上面³'),I(3,'同埋：擺 X 同埋 Y 係 A'),
+    I(3,'3-ICW：擺大¹蘋果²喺豬³前面⁴'),I(3,'3-ICW：擺藍色¹叉²喺袋³入邊⁴'),I(3,'三步驟指令：首先……跟住……最後……'),I(4,'5-CE（五元素句式建構）')]},
+  {h:'時態 / 貌詞理解', d:'rec', items:[
+    I(2,'完・左・未・緊（2.5–3 歲）'),I(3,'住・下（3.5–4 歲）')]},
+  {h:'句式理解', d:'rec', tag:'3.5 歲起', items:[
+    I(3,'SVOO：我攞蘋果俾媽媽'),I(3,'SVOA：我擺書喺檯度'),I(3,'VOC：俾蘋果媽媽食'),
+    I(4,'被動句：俾……／被……'),I(4,'比較句：比……高／大'),I(4,'複句：除左……'),I(4,'複句：……之前……'),I(4,'複句：……之後……')]},
+  {h:'複雜句理解', d:'rec', tag:'5–6 歲', items:[
+    I(5,'著紅色衫果個係哥哥（embedded – referencing）'),I(5,'複句：因為……所以 (causal)'),I(5,'複句：雖然……但 (concessive)'),I(5,'複句：如果……就 (conditional)')]},
+  {h:'推理性問題', d:'rec', tag:'5–6 歲', note:'語境：森林裡面有獅子、兔仔、豬仔。豬仔打兔仔。', items:[
+    I(5,'邊個最頑皮?'),I(5,'獅子會罰邊個?'),I(5,'豬仔去返學，邊個唔使返學?')]},
+]},
+{tab:'exp', label:'二、表達能力', title:'二、表達能力 (Expressive Language)', desc:'詞彙運用、句式組織及主動口語表達能力', groups:[
+  {h:'前語言 / 非口語', d:'exp', tag:'9 個月–1 歲', items:[
+    I(0,'手勢要求物件'),I(0,'手勢拒絕'),I(0,'以動作打招呼'),I(0,'類似字詞的聲音'),I(0,'模仿動作'),I(0,'模仿發聲'),I(0,'視線追蹤'),I(0,'共同專注')]},
+  {h:'單字階段', d:'exp', items:[
+    I(1,'說出熟悉人物：爸爸、媽媽'),I(1,'說出熟悉動物：貓貓'),I(1,'說出熟悉物件：包包'),
+    I(1,'說出約 10–20 個日常詞彙（1.5–2 歲）'),I(1,'日常形容詞：飽飽、美味（1.5–2 歲）'),
+    I(2,'說出約 200 個日常詞彙（2–2.5 歲）'),I(2,'說出約 500 個日常詞彙（2.5–3 歲）')]},
+  {h:'語用表達', d:'exp', tag:'10–18 個月', items:[
+    I(1,'否定'),I(1,'擁有'),I(1,'拒絕'),I(1,'消失／(不)存在'),I(1,'指稱')]},
+  {h:'雙詞句', d:'exp', tag:'1.5–2 歲', items:[
+    I(1,'名詞＋動詞 (SV)：媽媽抱'),I(1,'動詞＋物件 (VO)：切橙橙'),I(1,'動詞＋人物 (VO)：俾 BB'),
+    I(1,'物件＋形容 (SA)：餅餅好味'),I(1,'動詞＋地方 (VA)：去沙灘'),I(1,'Neg X：唔要、冇錢、未返屋企'),I(1,'N adj / adj N：大波')]},
+  {h:'三詞句', d:'exp', tag:'2–2.5 歲', items:[
+    I(2,'SVO：媽媽搭巴士'),I(2,'SVO：爸爸抱 BB'),I(2,'VOO：俾巴士 BB'),I(2,'SVA：BB 去公園'),
+    I(2,'VOC：用匙羹舀湯'),I(2,'VAC：去公園玩'),I(2,'VOA：擺牛奶喺雪櫃')]},
+  {h:'三詞句式', d:'exp', tag:'2–2.5 歲', items:[
+    I(2,'D adj N：呢個大波'),I(2,'Neg XY：唔食橙'),I(2,'adj adj N：紅色大波')]},
+  {h:'四詞句', d:'exp', tag:'2.5–3 歲', items:[
+    I(2,'SVOO：媽媽俾餅姐姐'),I(2,'SVOC：爸爸抱 BB 去街'),I(2,'SVAC：姐姐去公園玩'),I(2,'SVOA：媽媽擺蛋喺雪櫃'),I(2,'Neg XYZ：無人嚟陪我')]},
+  {h:'問句表達', d:'exp', tag:'按年齡', items:[
+    I(2,'What? / What doing?'),I(2,'Where?'),I(2,'A-not-A（2;06）'),I(2,'Why（2;08）'),I(2,'Who（2;10）'),I(2,'How（2;10）'),
+    I(3,'運用「咩呀 what?」'),I(3,'運用「邊度 where?」'),I(3,'運用「邊個 who?」'),I(3,'運用「X 唔 X?」'),I(3,'Which（3;02）')]},
+  {h:'概念 / 參照', d:'exp', tag:'3–3.5 歲', items:[
+    I(3,'Comparative：呢個係大波，咁呢個呢?'),I(3,'Referencing：主動用代詞指代物件')]},
+  {h:'社交用語', d:'exp', tag:'2.5–3 歲', items:[
+    I(2,'運用社交常規詞彙'),I(2,'談話時加入新資料'),I(2,'聽不明白時要求澄清')]},
+  {h:'連接詞（一）', d:'exp', items:[
+    I(3,'因為 (causal)：因為好凍／因為咳（3.5 歲起）'),I(3,'但係 (concessive)（3.5 歲起）'),I(3,'或者：車或者船（3.5 歲起）'),
+    I(4,'雖然……但 concessive（4.5 歲起）'),I(4,'因為……所以 causal（4.5 歲起）'),I(4,'如果……就 conditional（4.5 歲起）')]},
+  {h:'連接詞（二）', d:'exp', items:[
+    I(3,'同埋：貓同埋狗（3.5 歲起）'),I(3,'跟住 (temporal)（3.5 歲起）'),I(3,'一路……一路（3.5 歲起）'),I(3,'果陣 (subordination)（3.5 歲起）'),I(3,'首先……跟住……最後……（3.5 歲起）'),
+    I(4,'之後 (temporal)（4.5 歲起）'),I(4,'之前 (temporal)（4.5 歲起）')]},
+  {h:'連接詞（三）', d:'exp', items:[
+    I(4,'除左 (concessive)（4.5 歲起）'),I(5,'不過（5;06）')]},
+]},
+{tab:'nar', label:'三、敘事與高階思維', title:'三、敘事能力與高階思維', desc:'', groups:[
+  {h:'1. 圖卡排序及描述 / 故事文法', d:'nar', tag:'4;00 以上', extra:'圖卡數目與內容可在下方填寫', items:[
+    I(4,'次序正確'),I(4,'故事文法：時間'),I(4,'故事文法：地點'),I(4,'故事文法：人物'),I(4,'故事文法：起因'),I(4,'故事文法：經過'),I(4,'故事文法：結果'),I(4,'故事文法：感受'),
+    I(4,'Connection：突然間'),I(4,'Connection：然後／跟住／最後'),I(4,'Connection：於是 (causal)'),I(4,'Microstructure：情緒詞彙')]},
+  {h:'故事理解：《金魚》', d:'nar', tag:'4 歲以上', note:'星期六，妹妹同婆婆去旺角買金魚。有隻貓仔見到金魚流曬口水，就跟住妹妹。突然間，妹妹發現放金魚嘅袋爛咗。佢好擔心，於是就跑去搵賣金魚嘅伯伯。最後伯伯幫妹妹換咗一個新嘅袋，金魚就冇事啦。', items:[
+    I(4,'(when) 呢件事係幾時發生㗎? — 星期六'),I(4,'(who) 妹妹同邊個一齊行街? — 同婆婆'),I(4,'(where) 去邊度行街? — 旺角'),I(4,'(what) 買咗乜嘢? — 一條金魚'),
+    I(4,'(who) 邊個跟住妹妹? — 貓仔'),I(4,'(what) 放金魚嘅袋發生咩事? — 爛咗'),I(4,'(why) 點解妹妹好驚金魚冇水? — 冇水金魚會死'),
+    I(4,'(why) 貓仔點解要跟住妹妹? — 想食金魚'),I(4,'(why) 點解個袋爛咗? — 俾貓咬爛／袋太薄'),I(4,'(解難) 袋爛咗可以點算?'),
+    I(4,'(what) 如果冇伯伯幫手，金魚會點? — 死咗／俾貓食咗'),I(4,'(how) 金魚得救咗，妹妹心情點? — 開心、鬆一口氣')]},
+  {h:'2. 高階思維 (Higher Cognitive Thinking)', d:'nar', tag:'按年齡', items:[
+    I(3,'推測：落雨地下會點?'),I(3,'推測：食左污糟野會點?'),I(3,'因果：點解要食野／食藥?'),I(3,'因果：點解要擔遮?'),
+    I(5,'解難：倒瀉水點算?'),I(5,'解難：我想食塊餅，但跌左落地，點算?'),I(5,'邏輯：夜晚見唔見到太陽?'),I(5,'邏輯：夏天係唔係好熱?'),
+    I(6,'詞語釋義 (word definition)'),I(6,'擴散性思維 (divergent)'),I(6,'聚焦性思維 (convergent)'),
+    I(6,'同義詞：喜歡（鍾意）'),I(6,'同義詞：快樂（開心）'),I(6,'同義詞：小（細）'),
+    I(6,'反義詞：遠（近）'),I(6,'反義詞：傷心（開心）'),I(6,'反義詞：細（大）'),
+    I(6,'推論：小明又唔做功課，俾媽媽鬧 — 係唔係第一次? 點解?'),I(6,'推論：佢本來唔會贏，結果有無贏? 點解?')]},
+]},
+{tab:'pra', label:'四、語用', title:'四、語用與口肌能力 (Pragmatics & Oral Motor)', desc:'', groups:[
+  {h:'1. 語用：0–9 個月', d:'pra', items:[I(0,'眼神接觸'),I(0,'笑'),I(0,'模仿：聲音／動作'),I(0,'輪流作轉'),I(0,'共同專注')]},
+  {h:'語用：9 個月–1.5 歲', d:'pra', items:[I(0,'標籤'),I(0,'引人注意'),I(1,'要求'),I(1,'拒絕'),I(1,'抗議'),I(0,'打招呼'),I(1,'回應'),I(1,'主動引發非口語溝通')]},
+  {h:'語用：1.5–3 歲', d:'pra', items:[I(1,'用說話回應問題'),I(1,'評論'),I(1,'抒發感受'),I(2,'修補話題'),I(2,'主動引發口語溝通')]},
+  {h:'語用：3–4 歲', d:'pra', items:[I(3,'以「可唔可以」要求（3;06）'),I(3,'提供資料'),I(3,'講述過去及未來'),I(3,'打開話題'),I(3,'對話扮演')]},
+  {h:'語用：4 歲以上', d:'pra', items:[
+    I(4,'間接要求'),I(4,'談判／討價還價'),I(4,'列明規矩'),I(4,'展明意見'),I(4,'禮貌用語'),I(4,'說笑'),I(4,'諷刺'),
+    I(4,'適當地加入話題'),I(4,'運用合適的社交技巧'),I(4,'貼題'),I(4,'要求澄清'),I(4,'修補話題')]},
+]},
+{tab:'oral', label:'口肌與發音', title:'口肌與發音', desc:'口肌動作、發音發展及 Stimulability 檢測', groups:[
+  {h:'口肌和發音', d:'oral', tag:'按年齡', items:[
+    I(1,'口肌：能合上咀巴咀嚼東西'),I(1,'口肌：能用杯飲水而不會漏出'),I(1,'口肌：能咬開部分固體食物及自己拿小食吃'),
+    I(1,'口肌：能用吸管喝東西，連串地吸啜和吞嚥'),I(1,'口肌：能連續用杯飲 1 安士水'),
+    I(2,'口肌：進食時能用舌頭把食物從一邊移到另一邊'),
+    I(2,'發音(男)：p,t,h,w,m — 包、爸、開、喊、蛙、湖、媽、米、打、多'),I(2,'發音(女)：p,h,j,w,m,ŋ/ø — 包、爸、開、喊、蛙、湖、媽、米、一、日'),
+    I(2,'口肌：能因應不同食物的厚度而張開咀巴'),
+    I(2,'發音(男)：f,j,ŋ/ø — 花、飛、一、羊、糖'),I(2,'發音(女)：pʰ,t,kʷ,f,l — 花、飛、打、多、瓜、關、婆、拍、六、梨'),I(2,'發音：能說出所有元音'),
+    I(3,'發音(男)：pʰ,tʰ,k,kʰ,kʷ,kʷʰ,ts,l — 鐘、豬、天、跳、家、機、卡、棋、裙、規'),I(3,'發音(女)：tʰ,k,kʰ,kʷʰ,ts — 鐘、豬、天、跳、家、機、卡、棋、裙、規'),
+    I(3,'發音(男/女)：tsʰ 字詞'),I(4,'發音(男/女)：s 字詞'),I(4,'發音：能準確地說出所有廣東話字詞')]},
+]},
+];
+// 口肌觀察行
+const oralRows = [
+  {p:'Jaw 下顎', obs:[{t:'對稱 Symmetric',s:0},{t:'活動幅度 range',s:0},{t:'活動方向 direction',s:0}]},
+  {p:'Lip 嘴唇', obs:[{t:'對稱 Symmetric',s:0},{t:'活動幅度 range',s:0},{t:'展開 spread',s:0},{t:'圓唇 round',s:0}]},
+  {p:'Tongue 舌頭', obs:[{t:'對稱 Symmetric',s:0},{t:'活動幅度 range',s:0},{t:'活動方向 direction',s:0}]},
+  {p:'Soft Palate 軟顎', obs:[{t:'對稱 Symmetric',s:0}]},
+  {p:'Others 其他', obs:[]},
+];
+const dailyObs = [{t:'流口水',s:0},{t:'啜奶嘴／手指',s:0},{t:'其他',s:0}];
+const foodObs = [{t:'流質',s:0},{t:'脆',s:0},{t:'硬',s:0},{t:'重味道',s:0},{t:'其他',s:0}];
+const stim = ['p 菠蘿 麵包','pʰ 跑步 水泡','m 馬路 小貓','f 飛機 打風','t 電視 青豆','tʰ 跳舞 樓梯','n 奶咀 電腦','l 落雨 狐狸','ts 紙巾 香蕉','tsʰ 廁所 火車','s 沙灘 老師','k 雞蛋 天橋','kʰ 企鵝 蕃茄','kʷ 怪獸 西瓜','kʷʰ 跨欄 細菌','ŋ 牙齒 海鷗','h 可樂 彩虹','j 椰子 女人','w 玩具 青蛙']
+  .map(x=>{const [s,wi,wf]=x.split(' ');return {s,wi,wf,c:[false,false,false,false,false,false],pct:''};});
+const dxs = [
+  {k:'A',label:'發展性語言障礙／遲緩 (Developmental Language Disorder / Delay)',note:'【5 歲以下】言語、語言及溝通需要 SLCN；並非由生物醫學疾病引致。【5 歲起】語言缺損對社交、學業造成不良影響方可診斷；高風險兒童可於 5 歲前診斷。共病：ADHD、讀寫障礙、動作協調／構音障礙、聽覺處理障礙、行為／情緒問題等。'},
+  {k:'B',label:'語言障礙／遲緩 (Language Disorder / Delay)',note:'【3 歲以下】預後欠佳指標：24 個月未能組合詞語、理解困難、不懂用手勢、無法模仿動作、社交回應及共同注意力差、家族病史。【5 歲以下】無風險因素→語言困難；有→語言障礙。【5 歲以上】接收性語言受損、非語言能力偏低→預後欠佳。'},
+  {k:'C',label:'伴隨 X 疾病的語言障礙 (Language Disorder Associated with X)',note:'生物醫學疾病：腦創傷、獲得性癲癇性失語症、基因疾病（唐氏綜合症、腦癱）、感音神經性聽力損失、ASD、智力障礙 (IQ<70) 等。'},
+  {k:'D',label:'語言發展遲現 (LLE)／遲語兒 (Late Talker)',note:'18–24 個月；理解良好；溝通、遊戲、動作、認知屬典型水平；表達性語言有限。'},
+  {k:'E',label:'語音障礙 (Speech Sound Disorder)',note:'構音障礙 Dysarthria、言語運用障礙 CAS、發音障礙 Articulation disorder、口面結構缺陷。'},
+  {k:'F',label:'嗓音障礙 (Voice Disorder)',note:''},
+  {k:'G',label:'語暢障礙 (Fluency Disorder)',note:''},
+];
+
+// 報告常模與建議文案
+const TYP = {
+ '0-1':{age:'0 至 1 歲',rec:'逐漸對熟悉聲音、名字及日常語句作出反應。',exp:'以聲音、表情、動作或手勢表達需要，並開始模仿發聲。',nar:'透過共同注意及成人引導參與簡單活動；正式敘事能力仍在萌芽階段。',pra:'以眼神、笑容、手勢及輪流互動建立早期溝通。'},
+ '1-2':{age:'1 至 2 歲',rec:'理解常見人物、物件及簡單日常指令。',exp:'由單詞逐漸發展至簡單雙詞組合，表達基本需要或行動。',nar:'在成人支持下注意熟悉圖片或日常事件。',pra:'透過要求、拒絕、打招呼及回應等方式參與互動。'},
+ '2-3':{age:'2 至 3 歲',rec:'理解較多日常問題、簡單概念及兩步驟指令。',exp:'運用更多詞彙和短句表達需要、行動及經驗。',nar:'開始在成人提問下描述簡單事件或圖片。',pra:'可在日常情境中回應、要求及參與簡單輪流對話。'},
+ '3-4':{age:'3 至 4 歲',rec:'理解較複雜的指令、問題及基本關係概念。',exp:'使用較長句子及更多詞彙描述人物、物件和事件。',nar:'在引導下按先後描述事件，開始理解簡單因果關係。',pra:'可主動開啟或延續簡單話題，並因應對象作出回應。'},
+ '4-5':{age:'4 至 5 歲',rec:'理解較複雜的指令、問題和日常推理內容。',exp:'運用較完整句式及連接詞表達經驗、意見或原因。',nar:'較能組織故事或生活事件，說出開始、經過及結果。',pra:'能因應日常社交情境運用禮貌語、回應及簡單協商。'},
+ '5-6':{age:'5 至 6 歲及以上',rec:'理解多步驟指令、較複雜句子及部分抽象語言內容。',exp:'運用較完整而連貫的句子，表達原因、條件及不同觀點。',nar:'較能有組織地講述故事或經驗，包含重要人物、事件及結果。',pra:'在不同對象和情境中較靈活地維持對話、澄清及表達意見。'}
+};
+const DOMS = {
+ rec:{name:'理解能力',typ:'rec',impact:'在日常生活或學習活動中，學生可能較容易在較長指令、較複雜問題或包含位置、數量等概念的說話中遺漏訊息。因此，成人可先確保學生注意，再把訊息分段說明，配合實物、圖片或手勢，並預留回應時間及給予具體回饋。',nextBase:'以學生熟悉的玩具、實物或圖片配合一至兩步指令；先協助其共同留意，將任務拆成小步驟，完成每一步後給予具體回饋。',nextAdv:'下一步可先在熟悉活動中以一項清晰要求配合實物、圖片或手勢；待學生完成後即時指出其已完成的內容，再加入下一步，並逐漸減少提示。',home:'在收拾、穿衣或用餐等熟悉情境先叫孩子名字並展示相關物件，再以短句提出一項要求；完成後即時說出其做到的地方，再逐步加入第二步。'},
+ exp:{name:'表達能力',typ:'exp',impact:'在日常溝通中，學生可能較難即時組織合適詞彙或句子，以清楚說明需要、分享經驗或回應提問。當表達未能完整時，學生亦可能較依賴成人猜測其意思；成人可先接納其溝通嘗試，再以較完整而自然的句子作示範及給予具體回應。',nextBase:'跟隨孩子當下的興趣描述人物、物件與動作；待其作出眼神、手勢、聲音或口語嘗試後，以較完整句子加上一至兩個詞作示範，並提供簡單選擇，而非要求機械重複。',nextAdv:'跟隨學生選擇的玩具或圖書，在有意義的遊戲回合中重複示範目標詞／短句；接納其嘗試後作自然擴展，並即時肯定其已表達的內容。',home:'下一步可在孩子感興趣的遊戲、共讀或生活主題中自然、重複示範目標詞與短句；接納其表達後加上一至兩個詞，提供可選答案並預留等待時間。'},
+ nar:{name:'敘事與高階思維',typ:'nar',impact:'學生在講述個人經驗、重述故事或回答「為甚麼／怎樣」等開放式問題時，可能較難選取重點、安排先後或說明原因。成人可利用圖片、生活照片及「先、然後、最後」等語句框架，把較長的說話內容拆成小步驟練習，並在每一步給予明確回饋。',nextBase:'共讀或看圖時，以「先發生甚麼、之後呢、最後怎樣」逐一引導孩子重述；每完成一個步驟便給予具體回應，待其熟悉後再問「下一步會怎樣」或「為甚麼」，避免一次提出多個問題。',nextAdv:'以貼近日常經驗的三張生活照片或連環圖進行排序；先建立先後概念和清晰的回應框架，再逐步加入下一步預測、簡單原因及問題解決提問。',home:'下一步可從三張生活照片或圖卡開始，使用「先、然後、最後」整理事件；完成排序後，再加入「下一步會怎樣」的簡單預測。'},
+ pra:{name:'語用與社交溝通',typ:'pra',impact:'在與成人或同儕互動時，學生可能較難主動開始、適時回應或延續話題，因而影響互動的來回與連貫性。成人可在熟悉且有動機的活動中示範輪流、等候及接續說話，並即時肯定學生的溝通嘗試。',nextBase:'在輪流遊戲、用餐或親子閱讀中先和孩子看同一物件，再停一停等候其眼神、手勢、聲音或口語回應；可先由成人示範一個簡短回應，孩子作出溝通嘗試時即時自然回應並示範下一個可接續的說法。',nextAdv:'以學生有動機的共享玩具或輪流遊戲建立共同注意，安排短暫等待及清晰回合；先以成人或同儕示範一個互動動作，再讓學生練習主動開始、回應和延續互動。',home:'下一步可在共享玩具或輪流遊戲中建立共同注意、短暫等待及一來一回的互動；成人可先作簡短示範，讓學生有機會主動要求、回應或延續話題。'}
+};
+const HOME_BASE = `【能力鞏固與泛化】在言語治療課堂中，以學生已掌握的溝通表現為起點，於不同教材、活動及互動對象中練習同一能力。
+【治療參與與溝通主動性】在言語治療課堂中，以學生能參與的遊戲或活動為媒介，練習等待、輪流、回應及主動提出需要。
+【能力整合】在言語治療課堂中，將學生已掌握的理解、表達或互動能力結合於同一項遊戲或故事活動中，逐步增加活動要求。
+
+家居建議：
+・把孩子已掌握的溝通能力帶入日常遊戲、閱讀和用餐等情境，透過自然對話給予回應和讚賞。
+・在孩子精神及注意力較佳的短時間內進行親子互動；從其已能參與的玩具、故事或生活活動開始，逐步加入一項新的溝通要求。
+・孩子作出任何眼神、手勢、聲音或口語嘗試時，先回應其溝通意圖，再以自然、較完整的說法作示範，讓孩子在沒有壓力下模仿和延伸。`;
+
+const TPL = `
+
+  <el-container>
+
+    <!-- ═══════ 頂部橫幅 ═══════ -->
+    <el-header class="banner" height="auto">
+      <div class="brand">學前兒童口語評估量表</div>
+      <div class="sub">Preschool Language Assessment Scale（0–6 歲）｜言語治療評估工具</div>
+    </el-header>
+
+    <!-- ═══════ 兒童資料 ═══════ -->
+    <el-header class="metabar" height="auto">
+      <el-form :inline="true" class="meta-form" size="default">
+        <el-form-item label="機構"><el-input v-model="f.org" placeholder="機構名稱" style="width:170px"></el-input></el-form-item>
+        <el-form-item label="姓名"><el-input v-model="f.name" placeholder="兒童姓名" style="width:120px"></el-input></el-form-item>
+        <el-form-item label="出生日期"><el-date-picker v-model="f.dob" type="date" value-format="YYYY-MM-DD" placeholder="選擇日期" style="width:150px" @change="onDob"></el-date-picker></el-form-item>
+        <el-form-item label="年齡"><el-tag :type="f.dob?'primary':'info'" :effect="f.dob?'dark':'plain'" size="large" style="font-weight:700">{{ ageLabel }}</el-tag></el-form-item>
+        <el-form-item label="性別">
+          <el-radio-group v-model="f.sex">
+            <el-radio-button value="男">男</el-radio-button>
+            <el-radio-button value="女">女</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="評估日期"><el-date-picker v-model="f.adate" type="date" value-format="YYYY-MM-DD" style="width:150px"></el-date-picker></el-form-item>
+      </el-form>
+    </el-header>
+
+    <el-header class="toolbar no-print" height="auto">
+      <div class="toolbar-row">
+        <span style="font-weight:600;font-size:13px;color:var(--el-text-color-secondary)">按年齡篩選</span>
+        <el-check-tag v-for="(lb,i) in ageLabels" :key="i" :checked="selMax!==null && i<=selMax" @change="pickAge(i)" size="small">{{ lb }}</el-check-tag>
+        <el-check-tag :checked="selMax===null" @change="selMax=null" size="small">顯示全部</el-check-tag>
+        <el-divider direction="vertical"></el-divider>
+        <el-checkbox v-model="compact" size="small">智能縮減：列印時略去未記錄項</el-checkbox>
+        <el-button type="primary" plain size="small" @click="printForm">列印評估表</el-button>
+        <el-divider direction="vertical"></el-divider>
+        <span style="font-size:12px;color:var(--el-text-color-secondary)">
+          記錄狀態（點擊切換）：
+          <el-tag type="info" effect="plain" size="small" style="margin:0 2px">○ 未測試</el-tag>
+          <el-tag type="primary" effect="plain" size="small" style="margin:0 2px">✓ 獨立完成</el-tag>
+          <el-tag type="danger" effect="plain" size="small" style="margin:0 2px">✗ 回答錯誤</el-tag>
+          <el-tag type="warning" effect="plain" size="small" style="margin:0 2px">◐ 需提示／半完成</el-tag>
+        </span>
+      </div>
+    </el-header>
+
+    <el-main style="max-width:1280px;margin:0 auto;width:100%;padding:26px 32px 90px">
+
+        <!-- ═══════ 臨床觀察 ═══════ -->
+          <el-card shadow="never">
+            <template #header><b>臨床觀察 (Clinical Observation)</b></template>
+            <div class="grp-h">一般觀察 / 行為表現</div>
+            <el-input v-model="f.obs1" type="textarea" :rows="3" placeholder="記錄兒童的一般行為、注意力、配合度、社交互動等臨床觀察…"></el-input>
+            <div class="grp-h">言語特徵 / 發音情況</div>
+            <el-input v-model="f.obs2" type="textarea" :rows="3" placeholder="記錄兒童的發音清晰度、音韻過程、語速、語調、聲音品質等特徵…"></el-input>
+            <div class="grp-h">主要關注 / 建議</div>
+            <el-input v-model="f.obs3" type="textarea" :rows="3" placeholder="記錄治療師的主要關注點、初步印象、後續建議或轉介意見…"></el-input>
+          </el-card>
+
+
+        <!-- ═══════ 理解 / 表達 / 敘事 / 語用口肌 ═══════ -->
+        <template v-for="pg in pages" :key="pg.tab">
+          <el-card shadow="never">
+            <template #header><b>{{ pg.title }}</b><span v-if="pg.desc" style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">{{ pg.desc }}</span></template>
+            <template v-for="g in pg.groups" :key="g.h">
+              <div class="grp-h">{{ g.h }} <el-tag v-if="g.tag" size="small" type="info" effect="plain">{{ g.tag }}</el-tag>
+                <span class="selall">
+                  <el-button link type="primary" size="small" @click="selectAll(g,2)" title="全部設為獨立完成">✓全選</el-button>
+                  <el-button link type="danger" size="small" @click="selectAll(g,3)" title="全部設為回答錯誤">✗全選</el-button>
+                  <el-button link type="warning" size="small" @click="selectAll(g,1)" title="全部設為需提示／半完成">◐全選</el-button>
+                </span></div>
+              <p v-if="g.note" class="note">{{ g.note }}</p>
+              <div v-if="g.extra" style="margin:2px 0 6px" v-html="g.extra"></div>
+              <div class="items">
+                <el-tag v-for="it in g.items" :key="it.t" :class="['st','s'+it.s,{dim:isDim(it)}]"
+                        size="large" effect="plain"
+                        :type="it.s===2?'primary':it.s===1?'warning':it.s===3?'danger':'info'"
+                        @click.capture="cycle(it)">{{ ['○','◐','✓','✗'][it.s] }} {{ it.t }}</el-tag>
+              </div>
+            </template>
+            <!-- 口肌觀察表 -->
+            <template v-if="pg.tab==='oral'">
+              <div class="grp-h">口肌能力觀察 (Oral Motor)</div>
+              <el-table :data="oralRows" size="small" border style="margin:6px 0 14px">
+                <el-table-column prop="p" label="部位" width="150"></el-table-column>
+                <el-table-column label="觀察項目（預設正常，有異常才點選）">
+                  <template #default="{row}"><el-tag v-for="o in row.obs" :key="o.t" class="st" size="large" effect="plain" :type="o.s===1?'danger':'info'" @click.capture="toggleObs(o)">{{ o.s===1?'✗ 異常 — ':'✓ 正常 — ' }}{{ o.t }}</el-tag></template>
+                </el-table-column>
+              </el-table>
+              <div class="items">
+                <span class="note" style="margin-right:4px">日常表現（預設無，有才點選）：</span>
+                <el-tag v-for="o in dailyObs" :key="o.t" class="st" size="large" effect="plain" :type="o.s===1?'danger':'info'" @click.capture="toggleObs(o)">{{ o.s===1?'✗ 有 ':'✓ 無 ' }}{{ o.t }}</el-tag>
+                <el-input v-model="f.oralNote" placeholder="請補充…" style="width:230px" size="small"></el-input>
+              </div>
+              <div class="items" style="margin-top:8px">
+                <span class="note" style="margin-right:4px">進食食物種類／質地（有攝取請點選）：</span>
+                <el-tag v-for="o in foodObs" :key="o.t" class="st" size="large" effect="plain" :type="o.s===1?'primary':'info'" @click.capture="toggleObs(o)">{{ (o.s===1?'✓ ':'○ ') + o.t }}</el-tag>
+                <el-input v-model="f.foodNote" placeholder="請補充…" style="width:230px" size="small"></el-input>
+              </div>
+              <el-divider></el-divider>
+              <el-collapse>
+                <el-collapse-item title="Speech Stimulability Test（HKCAT 後進行，只測未能正確發出的音）" name="stim">
+                  <p class="note">跟住落嚟我哋會做一個測試，你重複我講嘅嘢……（Miccio, 2002）</p>
+                  <el-table :data="stim" size="small" border>
+                    <el-table-column prop="s" label="聲母" width="70" align="center"></el-table-column>
+                    <el-table-column v-for="(v,i) in ['_a','_e','_i','_o','_u','隔離']" :key="v" :label="v" width="60" align="center">
+                      <template #default="{row}"><el-checkbox v-model="row.c[i]"></el-checkbox></template>
+                    </el-table-column>
+                    <el-table-column prop="wi" label="詞首 WI"></el-table-column>
+                    <el-table-column prop="wf" label="詞尾 WF"></el-table-column>
+                    <el-table-column label="% correct" width="100"><template #default="{row}"><el-input v-model="row.pct" size="small"></el-input></template></el-table-column>
+                  </el-table>
+                </el-collapse-item>
+              </el-collapse>
+            </template>
+          </el-card>
+        </template>
+
+        <!-- ═══════ 診斷 ═══════ -->
+          <el-card shadow="never">
+            <template #header><b>診斷 (Diagnosis)</b><span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">選擇診斷類別及嚴重程度</span></template>
+            <el-select v-model="f.dx" placeholder="選擇診斷類別" style="width:100%;max-width:560px" size="large" clearable>
+              <el-option v-for="d in dxs" :key="d.k" :label="d.k + ') ' + d.label" :value="d.label"></el-option>
+            </el-select>
+            <el-alert v-if="dxNote" :title="dxNote" type="info" :closable="false" style="margin:12px 0;line-height:1.8"></el-alert>
+            <div style="display:flex;align-items:center;gap:12px;margin:14px 0">
+              <span style="font-weight:600">嚴重程度：</span>
+              <el-radio-group v-model="f.sev">
+                <el-radio-button value="輕度">輕度 (Mild)</el-radio-button>
+                <el-radio-button value="中度">中度 (Moderate)</el-radio-button>
+                <el-radio-button value="嚴重">嚴重 (Severe)</el-radio-button>
+              </el-radio-group>
+            </div>
+            <el-alert :title="'已選擇診斷：' + (f.dx || '—') + (f.sev ? '（' + f.sev + '）' : '')" type="info" :closable="false"></el-alert>
+          </el-card>
+
+
+        <!-- ═══════ 評估治療師 ═══════ -->
+          <el-card shadow="never">
+            <template #header><b>評估治療師 (Assessing Therapist)</b></template>
+            <el-form label-width="140px" style="max-width:560px">
+              <el-form-item label="治療師姓名"><el-input v-model="f.therapist"></el-input></el-form-item>
+              <el-form-item label="專業資格 / 執照"><el-input v-model="f.license"></el-input></el-form-item>
+              <el-form-item label="簽署日期"><el-date-picker v-model="f.signDate" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item>
+              <el-form-item label="簽名 / 簽署"><el-input v-model="f.signature"></el-input></el-form-item>
+              <el-form-item label="手寫簽名">
+                <el-upload :auto-upload="false" :show-file-list="false" accept="image/*" :on-change="onSignFile">
+                  <el-button size="small">匯入手寫簽名圖片</el-button>
+                </el-upload>
+                <img v-if="f.signImg" :src="f.signImg" style="height:46px;margin-left:12px;border:1px dashed var(--el-border-color);border-radius:6px;padding:4px;background:#fff"/>
+                <el-button v-if="f.signImg" link type="danger" size="small" @click="f.signImg=''">移除</el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+
+<!-- ═══════ 兒童檔案・干預方案・課程記錄 ═══════ -->
+<el-card shadow="never">
+  <template #header><b>兒童檔案・干預方案・課程記錄</b>
+    <span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">評估存檔 → 生成干預方案 → 記錄每次課程與效果</span>
+  </template>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+    <el-select v-model="curChildId" placeholder="選擇兒童檔案" style="width:230px" size="large" clearable>
+      <el-option v-for="c in children" :key="c.id" :label="c.name + '（' + (c.sessions?.length||0) + ' 次課程）'" :value="c.id"></el-option>
+    </el-select>
+    <el-button @click="ncDlg=true">＋ 新增兒童</el-button>
+    <el-button type="primary" plain @click="saveAssessment" :disabled="!curChild">儲存目前評估到此檔案</el-button>
+    <el-button @click="loadChild" :disabled="!curChild">載入此兒童評估</el-button>
+    <el-popconfirm title="確定刪除此檔案及全部課程記錄？" @confirm="delChild">
+      <template #reference><el-button type="danger" plain :disabled="!curChild">刪除檔案</el-button></template>
+    </el-popconfirm>
+    <span v-if="curChild" class="note" style="margin-left:6px">
+      {{ curChild.name }}・{{ curChild.sex||'—' }}・{{ curChild.dob||'—' }}｜已存 {{ curChild.sessions?.length||0 }} 次課程<span v-if="curChild.savedAt">｜評估存檔：{{ curChild.savedAt }}</span>
+    </span>
+  </div>
+  <el-divider content-position="left">本次干預方案（第 {{ nextSessionNo }} 次）</el-divider>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px">
+    <el-date-picker v-model="planDate" type="date" value-format="YYYY-MM-DD" style="width:150px"></el-date-picker>
+    <el-button type="primary" @click="genPlan(true)" :loading="genLoading" :disabled="!curChild">{{ genLoading ? 'AI 生成中… ' + genSecs + ' 秒' : 'AI 生成方案' }}</el-button>
+    <el-button @click="genPlan(false)" :disabled="!curChild">依種子庫生成</el-button>
+    <el-button link type="primary" @click="aiDlg=true">AI 設定</el-button>
+    <el-button type="success" @click="saveSession" :disabled="!plan">儲存為課程記錄</el-button>
+  </div>
+  <el-alert v-if="genLoading" title="AI 正在根據評估弱項與種子庫撰寫方案，長文生成可能需要 1–2 分鐘，請勿關閉頁面" type="info" :closable="false" style="margin-bottom:10px"/>
+  <el-alert v-if="planErr" :title="planErr" type="error" :closable="false" style="margin-bottom:10px;line-height:1.8"/>
+  <template v-if="plan">
+    <div class="plan-ws">
+      <!-- 左：版本 + 方案內容 -->
+      <div class="plan-left">
+        <div class="grp-h">方案版本</div>
+        <div class="ver-list">
+          <button v-for="(v,i) in plan.versions" :key="i" :class="['ver',{on:i===plan.curIdx}]" @click="plan.curIdx=i">{{ v.label }}</button>
+        </div>
+        <div class="grp-h">訓練目標與遊戲 <span class="note">（勾選 = 採用；每個目標可展開）</span></div>
+        <el-collapse v-model="openGoals">
+          <el-collapse-item v-for="(g,gi) in plan.versions[plan.curIdx].goals" :key="plan.curIdx+'-'+gi" :name="String(gi)">
+            <template #title>
+              <span class="goal-title">目標 {{ gi+1 }}</span>
+              <el-tag size="small" :type="g.games.some(x=>x.checked)?'success':'info'" effect="plain">{{ g.games.filter(x=>x.checked).length }}/{{ g.games.length }} 遊戲採用</el-tag>
+              <span style="flex:1"></span>
+            </template>
+            <el-input v-model="g.text" type="textarea" :autosize="{minRows:1,maxRows:4}" placeholder="訓練目標"></el-input>
+            <div v-for="(gm,gmi) in g.games" :key="gmi" class="game-row">
+              <el-checkbox v-model="gm.checked"></el-checkbox>
+              <div class="game-fields">
+                <el-input v-model="gm.name" size="small" placeholder="遊戲／活動名稱"></el-input>
+                <div style="display:flex;gap:8px">
+                  <el-tag size="small" :type="DOM_TAG[gm.domain]||'info'" effect="plain">{{ DOM_NAME[gm.domain]||gm.domain }}</el-tag>
+                  <el-input v-model="gm.target" size="small" type="textarea" :autosize="{minRows:1,maxRows:3}" placeholder="要達到的目標"></el-input>
+                </div>
+                <el-input v-model="gm.desc" size="small" type="textarea" :autosize="{minRows:2,maxRows:6}" placeholder="玩法／措施"></el-input>
+              </div>
+              <el-button link type="danger" size="small" @click="g.games.splice(gmi,1)">刪</el-button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <el-button size="small" @click="addGame(gi)">＋ 加遊戲</el-button>
+              <el-popconfirm title="刪除此目標？" @confirm="delGoal(gi)">
+                <template #reference><el-button size="small" type="danger" plain>刪除此目標</el-button></template>
+              </el-popconfirm>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+          <el-button size="small" @click="addGoal">＋ 加一個目標</el-button>
+          <el-button size="small" type="success" @click="finalize">生成最終方案（採用勾選遊戲）</el-button>
+        </div>
+        <div v-if="finalPlan" class="final-box">
+          <div class="grp-h">★ 最終方案（第 {{ finalPlan.no }} 次・{{ finalPlan.date }}）</div>
+          <div v-for="(g,gi) in finalPlan.goals" :key="gi" style="margin-bottom:12px">
+            <b>目標 {{ gi+1 }}：</b>{{ g.text }}
+            <div v-for="(gm,gmi) in g.games" :key="gmi" style="margin:6px 0 0 18px;font-size:13px">
+              ▪ <b>{{ gm.name }}</b>（{{ DOM_NAME[gm.domain]||gm.domain }}）─ 目標：{{ gm.target }}｜玩法：{{ gm.desc }}
+            </div>
+            <div v-if="!g.games.length" class="note" style="margin-left:18px">（此目標未採用遊戲）</div>
+          </div>
+        </div>
+      </div>
+      <!-- 右：對話 -->
+      <div class="plan-right">
+        <div class="grp-h" style="margin-top:2px">修改對話 <span class="note">（例：第二個目標太難，換簡單的遊戲／加入一個口肌遊戲）</span></div>
+        <div class="chat-box" ref="chatBoxEl">
+          <div v-for="(m,mi) in plan.chat" :key="mi" :class="['msg',m.role]">{{ m.text }}</div>
+          <div v-if="chatLoading" class="msg assistant">⏳ AI 修改中…</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <el-input v-model="chatInput" placeholder="輸入修改指示…" @keyup.enter="sendChat"></el-input>
+          <el-button type="primary" @click="sendChat" :loading="chatLoading">送出</el-button>
+        </div>
+      </div>
+    </div>
+  </template>
+  <el-empty v-else description="選擇兒童後，按「AI 生成方案」或「依種子庫生成」" :image-size="70"></el-empty>
+  <el-divider content-position="left">課程記錄（{{ curChild?.sessions?.length||0 }} 次）</el-divider>
+  <el-table :data="curChild?.sessions||[]" size="small" border v-if="curChild">
+    <el-table-column prop="no" label="節數" width="64" align="center"></el-table-column>
+    <el-table-column prop="date" label="日期" width="110"></el-table-column>
+    <el-table-column label="訓練目標" min-width="220">
+      <template #default="{row}"><span class="note">{{ row.goals.join('；') }}</span></template>
+    </el-table-column>
+    <el-table-column label="遊戲" width="170">
+      <template #default="{row}"><span class="note">{{ row.games.map(g=>g.name).join('、') }}</span></template>
+    </el-table-column>
+    <el-table-column label="效果" width="150">
+      <template #default="{row}">
+        <el-select v-model="row.effect.level" size="small" @change="saveChildren">
+          <el-option v-for="e in EFFECTS" :key="e" :label="e" :value="e"></el-option>
+        </el-select>
+      </template>
+    </el-table-column>
+    <el-table-column label="" width="110" align="center">
+      <template #default="{row}">
+        <el-popconfirm title="刪除此記錄？" @confirm="delSession(row.id)">
+          <template #reference><el-button link type="danger" size="small">刪除</el-button></template>
+        </el-popconfirm>
+      </template>
+    </el-table-column>
+  </el-table>
+  <el-empty v-else description="尚未選擇兒童" :image-size="60"></el-empty>
+</el-card>
+
+<!-- ═══════ 干預種子庫 ═══════ -->
+<el-card shadow="never">
+  <template #header><b>干預種子庫</b>
+    <span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">所有干預遊戲與措施的範本，可維護更新；生成方案時從此調用</span>
+  </template>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+    <el-button type="primary" size="small" @click="openSeedDlg()">＋ 新增遊戲／措施</el-button>
+    <el-button size="small" @click="resetSeeds">恢復預設範本</el-button>
+    <el-upload :auto-upload="false" :show-file-list="false" accept=".json" :on-change="importSeeds"><el-button size="small">匯入 JSON</el-button></el-upload>
+    <el-button size="small" @click="exportSeeds">匯出 JSON</el-button>
+    <span class="note" style="align-self:center">共 {{ seeds.length }} 項（儲存於本機瀏覽器）</span>
+  </div>
+  <el-table :data="seeds" size="small" border>
+    <el-table-column label="範疇" width="110">
+      <template #default="{row}"><el-tag size="small" :type="DOM_TAG[row.domain]||'info'">{{ DOM_NAME[row.domain]||row.domain }}</el-tag></template>
+    </el-table-column>
+    <el-table-column prop="name" label="遊戲／措施" width="170"></el-table-column>
+    <el-table-column label="適齡" width="100">
+      <template #default="{row}">{{ row.amin }}–{{ row.amax }} 歲</template>
+    </el-table-column>
+    <el-table-column prop="goal" label="訓練目標" min-width="200"></el-table-column>
+    <el-table-column prop="desc" label="玩法／措施" min-width="240"></el-table-column>
+    <el-table-column label="" width="120" align="center">
+      <template #default="{row}">
+        <el-button link type="primary" size="small" @click="openSeedDlg(row)">編輯</el-button>
+        <el-button link type="danger" size="small" @click="delSeed(row)">刪除</el-button>
+      </template>
+    </el-table-column>
+  </el-table>
+</el-card>
+
+<!-- 新增兒童 -->
+<el-dialog v-model="ncDlg" title="新增兒童檔案" width="420px">
+  <el-form label-width="80px">
+    <el-form-item label="姓名"><el-input v-model="nc.name"></el-input></el-form-item>
+    <el-form-item label="性別">
+      <el-radio-group v-model="nc.sex"><el-radio-button value="男">男</el-radio-button><el-radio-button value="女">女</el-radio-button></el-radio-group>
+    </el-form-item>
+    <el-form-item label="出生日期"><el-date-picker v-model="nc.dob" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item>
+  </el-form>
+  <template #footer>
+    <el-button @click="ncDlg=false">取消</el-button>
+    <el-button type="primary" @click="addChild">建立</el-button>
+  </template>
+</el-dialog>
+
+<!-- 種子庫編輯 -->
+<el-dialog v-model="seedDlg" :title="seedForm.id?'編輯遊戲／措施':'新增遊戲／措施'" width="520px">
+  <el-form label-width="90px">
+    <el-form-item label="名稱"><el-input v-model="seedForm.name"></el-input></el-form-item>
+    <el-form-item label="範疇">
+      <el-select v-model="seedForm.domain" style="width:100%">
+        <el-option v-for="(v,k) in DOM_NAME" :key="k" :label="v" :value="k"></el-option>
+      </el-select>
+    </el-form-item>
+    <el-form-item label="適齡（歲）">
+      <div style="display:flex;gap:8px;align-items:center">
+        <el-input-number v-model="seedForm.amin" :min="0" :max="12"></el-input-number> 至
+        <el-input-number v-model="seedForm.amax" :min="0" :max="12"></el-input-number>
+      </div>
+    </el-form-item>
+    <el-form-item label="訓練目標"><el-input v-model="seedForm.goal" type="textarea" :rows="2"></el-input></el-form-item>
+    <el-form-item label="玩法／措施"><el-input v-model="seedForm.desc" type="textarea" :rows="3"></el-input></el-form-item>
+  </el-form>
+  <template #footer>
+    <el-button @click="seedDlg=false">取消</el-button>
+    <el-button type="primary" @click="saveSeed">儲存</el-button>
+  </template>
+</el-dialog>
+
+<!-- AI 設定 -->
+<el-dialog v-model="aiDlg" title="AI 設定" width="520px">
+  <el-alert type="info" :closable="false" style="margin-bottom:14px;line-height:1.8"
+    title="填入支援瀏覽器直連的 OpenAI 相容 API（如 OpenAI、DeepSeek）。金鑰只儲存在本機瀏覽器；未填寫時仍可用「依種子庫生成」。"></el-alert>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+    <span class="note">快速填入：</span>
+    <el-button v-for="p in AI_PRESETS" :key="p.n" size="small" @click="applyPreset(p)">{{ p.n }}</el-button>
+  </div>
+  <el-form label-width="100px">
+    <el-form-item label="協議">
+      <el-select v-model="aiCfg.type" style="width:100%">
+        <el-option label="OpenAI Chat Completions" value="openai"></el-option>
+        <el-option label="OpenAI Responses（Codex 接入）" value="responses"></el-option>
+        <el-option label="Anthropic Claude" value="anthropic"></el-option>
+      </el-select>
+    </el-form-item>
+    <el-form-item label="API 位址"><el-input v-model="aiCfg.base" placeholder="如 https://open.bigmodel.cn/api/v1"></el-input></el-form-item>
+    <el-form-item label="API Key"><el-input v-model="aiCfg.key" type="password" show-password placeholder="sk-..."></el-input></el-form-item>
+    <el-form-item label="模型"><el-input v-model="aiCfg.model" placeholder="glm-5.3 / deepseek-chat / claude-sonnet-4-5"></el-input></el-form-item>
+  </el-form>
+  <div style="display:flex;gap:10px;align-items:center">
+    <el-button size="small" :loading="aiTesting" @click="testAi">測試連線</el-button>
+    <span class="note" v-if="aiTest">{{ aiTest }}</span>
+  </div>
+  <template #footer>
+    <el-button @click="aiDlg=false">關閉</el-button>
+    <el-button type="primary" @click="saveAiCfg">儲存</el-button>
+  </template>
+</el-dialog>
+
+
+        <!-- ═══════ 家長報告 ═══════ -->
+          <el-card shadow="never" class="no-print" style="margin-bottom:14px">
+            <template #header><b>家長報告</b><span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">先完成評估記錄及頂欄資料，生成後報告內容可直接修改</span></template>
+            <el-space wrap>
+              <el-button type="primary" @click="genReport">生成家長報告</el-button>
+              <el-button type="success" plain @click="downloadReport" :disabled="!repHtml">下載報告 PDF</el-button>
+              <el-button plain @click="printReport" :disabled="!repHtml">預覽 / 列印 PDF</el-button>
+            </el-space>
+            <el-alert v-if="repWarn" :title="repWarn" type="warning" :closable="false" style="margin-top:12px"></el-alert>
+          </el-card>
+          <el-card v-if="repHtml" shadow="never" style="padding:0">
+            <div id="repDoc" v-html="repHtml"></div>
+          </el-card>
+          <el-empty v-else description="尚未生成報告 — 完成評估記錄後按「生成家長報告」"></el-empty>
+
+
+    </el-main>
+    <el-backtop :right="24" :bottom="24"></el-backtop>
+  </el-container>
+  <div class="footer no-print">本量表供註冊言語治療師作臨床評估之用；評估結果須結合臨床觀察及專業判斷綜合解讀。</div>
+
+`;
+
+const __vapp = createApp({
+  template: TPL,
+  setup(){
+    const f = reactive({org:'',name:'',dob:'',adate:new Date().toISOString().slice(0,10),sex:'',obs1:'',obs2:'',obs3:'',
+      dx:'',sev:'',therapist:'',license:'',signDate:new Date().toISOString().slice(0,10),signature:'',oralNote:'',foodNote:''});
+    const selMax = ref(null);
+    const compact = ref(false);
+    const ageLabels = ['0 歲','1 歲','2 歲','3 歲','4 歲','5 歲','6 歲+'];
+    const repWarn = ref('');
+    const repHtml = ref('');
+    const dxNote = computed(()=>{const d=dxs.find(x=>x.label===f.dx);return d?d.note:'';});
+
+    const months = ()=>{
+      if(!f.dob) return null;
+      const d0=new Date(f.dob+'T00:00:00'), d1=f.adate?new Date(f.adate+'T00:00:00'):new Date();
+      if(d1<d0) return null;
+      let m=(d1.getFullYear()-d0.getFullYear())*12+(d1.getMonth()-d0.getMonth());
+      if(d1.getDate()<d0.getDate()) m--;
+      return Math.max(0,m);
+    };
+    const ageLabel = computed(()=>{
+      const m=months(); return m===null?'—':Math.floor(m/12)+' 歲 '+(m%12)+' 個月';
+    });
+    function onDob(){
+      const m=months();
+      if(m!==null) selMax.value=Math.min(6,Math.floor(m/12));  // 自動選中同齡（含之前年齡）
+    }
+    function pickAge(i){ selMax.value = (selMax.value===i)? null : i; }  // 累積式：選 N 含 0..N
+    const isDim = it => selMax.value!==null && it.a>selMax.value;
+    // 點擊順序：未測試 → ✓ 獨立完成 → ◐ 需提示 → 未測試
+    // 點擊順序：○ 未測試 → ✓ 獨立完成 → ✗ 回答錯誤 → ◐ 需提示 → ○
+    function cycle(it){ it.s = it.s===0?2 : it.s===2?3 : it.s===3?1 : 0; }
+    function toggleObs(o){ o.s = o.s===1?0:1; }  // 口肌觀察：正常⇄異常／無⇄有／攝取切換
+    function onSignFile(file){
+      const rd = new FileReader();
+      rd.onload = e => { f.signImg = e.target.result; };
+      rd.readAsDataURL(file.raw);
+    }
+
+    function selectAll(g, s){
+      const vis = g.items.filter(it=>!isDim(it));          // 只作用於當前可見（未被年齡篩掉）的項目
+      const allSame = vis.length && vis.every(it=>it.s===s);
+      vis.forEach(it=>{ it.s = allSame ? 0 : s; });        // 已全部是該狀態 → 再點一次全部清空
+    }
+
+    function printForm(){
+      document.body.classList.toggle('compact', compact.value);
+      window.print();
+    }
+
+    // ── 報告 ──
+    const esc = s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    const top3 = a=>a.slice(0,3).join('、');
+    const bandKey = m=>m<12?'0-1':m<24?'1-2':m<36?'2-3':m<48?'3-4':m<60?'4-5':'5-6';
+    function collect(d){
+      const done=[],part=[],none=[];
+      PAGES.forEach(p=>p.groups.forEach(g=>{
+        if(g.d!==d) return;
+        g.items.forEach(it=>{
+          (it.s===2?done:it.s===1?part:none).push(it.t);
+        });
+      }));
+      return {done,part,none};
+    }
+    function ra(cls,label,text){return `<div class="ra ${cls}"><span class="ra-b">${label}</span><span class="ra-t">${text}</span></div>`;}
+    function narrative(dom,st,bandIdx){
+      const total=st.done.length+st.part.length+st.none.length;
+      if(!total) return ra('none','未有記錄','此範疇暫未有實際記錄可供整理；建議治療師按臨床觀察及相關評估結果補充判讀。');
+      const y=st.done.length
+        ?ra('ok','已建立能力',`可獨立處理「${top3(st.done)}」等項目，顯示已有${dom.name}基礎。`)
+        :ra('none','已建立能力',`本次未見能穩定獨立完成的${dom.name}項目，宜由較基礎的能力開始建立。`);
+      const g=st.part.length?ra('hint','提示下表現',`在成人提示或示範下，可處理「${top3(st.part)}」；現階段仍需要清晰而一致的支持。`):'';
+      let E;
+      if(st.none.length) E=ra('need','需要支持',`在「${top3(st.none)}」等項目尚未穩定掌握。${bandIdx!==null?'同齡參考範圍內留空的項目已按未能做到處理。':''}`);
+      else if(st.part.length) E=ra('hint','需要支持',`部分${dom.name}項目仍需成人提示，反映相關表現在互動情境中尚未穩定。`);
+      else E=ra('none','需要支持','現時未見明顯的同齡能力落差；可繼續於不同情境中鞏固及泛化。');
+      const v=st.none.length>st.done.length?dom.nextBase:dom.nextAdv;
+      return y+g+E+ra('next','下一步',v);
+    }
+
+    // ═══════ 兒童檔案・種子庫・AI 干預方案 ═══════
+    const DOM_NAME = {rec:'理解', exp:'表達', nar:'敘事/高階', pra:'語用', oral:'口肌/發音'};
+    const DOM_TAG  = {rec:'primary', exp:'success', nar:'warning', pra:'danger', oral:'info'};
+    const EFFECTS  = ['未見效','稍有進步','明顯進步','已達標'];
+
+    const DEFAULT_SEEDS = [
+     {id:'s01',domain:'rec', amin:0.5,amax:2, name:'吹泡泡要求練習', goal:'以手勢／單詞／雙詞提出要求，建立溝通動機與輪流', desc:'治療師反覆吹泡泡後停頓，等待兒童以眼神、手勢或說話要求「再玩」；逐步提升至口語表達（波、要波、再吹波）。'},
+     {id:'s02',domain:'rec', amin:1, amax:3, name:'實物圖卡配對', goal:'理解常見名詞（食物、動物、玩具、餐具）', desc:'從兩至三件實物中按名稱拿取，正確後配對圖卡；由熟悉物件開始，逐步增加選擇數目。'},
+     {id:'s03',domain:'rec', amin:1.5,amax:3, name:'老師說（Simon Says）', goal:'跟從單步驟至兩步驟指令（1-CE 至 2-CE）', desc:'以動作指令遊戲練習「俾、擺、推、拍」等動詞，再進而「擺蘋果喺盒度」等雙元素指令。'},
+     {id:'s04',domain:'rec', amin:2, amax:4, name:'尋寶小偵探', goal:'理解方位詞及 2-ICW 指令', desc:'把物件藏於房間不同位置，兒童按「擺叉喺凳上面」等提示尋寶；成功後由兒童發指令給治療師。'},
+     {id:'s05',domain:'rec', amin:2, amax:4, name:'聽指令做沙拉', goal:'理解兩步驟指令（首先……跟住……）', desc:'以玩具食物按口頭指示完成兩個步驟，如「首先洗菜，跟住切菜」；熟練後加入第三步驟。'},
+     {id:'s06',domain:'rec', amin:2.5,amax:4, name:'是非問答投票', goal:'回答係唔係、有無、X定Y 等問題', desc:'以圖卡進行「呢個係唔係蘋果呀？」問答投票遊戲，答對得分；再引入「有無」「定係」變化。'},
+     {id:'s07',domain:'rec', amin:3, amax:5, name:'超市小掌櫃', goal:'理解功用性問題及物件用途', desc:'扮演購物情境，治療師問「用咩切橙？」兒童在貨架上挑選正確工具；輪流替換角色。'},
+     {id:'s08',domain:'rec', amin:4, amax:6, name:'故事偵探', goal:'理解邊個、點解、幾時等問句及推理', desc:'聆聽短故事後回答直接與間接問題，如「獅子會罰邊個？」；鼓勵說出原因。'},
+     {id:'s09',domain:'exp', amin:1, amax:2.5, name:'單字搶答', goal:'說出熟悉人物、動物、物件名稱', desc:'翻卡搶答命名，正確即得分；由爸爸媽媽等高頻詞開始，逐步加入動物與日用品。'},
+     {id:'s10',domain:'exp', amin:1.5,amax:3, name:'句子骰子', goal:'說出 SV／VO／SVO 三詞句', desc:'擲骰子決定人物、動作、物件圖卡，兒童串成「媽媽切橙」等句子；可互換角色出題。'},
+     {id:'s11',domain:'exp', amin:2, amax:4, name:'神秘袋描述猜猜看', goal:'運用形容詞及描述性語言', desc:'袋中放物件，兒童以觸覺描述「長長的、硬硬的」再取出驗證；練習長短、軟硬、大小等詞。'},
+     {id:'s12',domain:'exp', amin:2.5,amax:4, name:'小記者報導', goal:'講述過去經驗，運用時態詞（咗、完）', desc:'以玩具咪高鋒訪問「今日做咗乜嘢」，引導用完整句子報告活動順序。'},
+     {id:'s13',domain:'exp', amin:3.5,amax:6, name:'連接詞接龍', goal:'運用因為／但係／如果／或者等連接詞', desc:'抽情境卡造句，如「因為落雨，所以擔遮」；接不上的做小任務，增加趣味。'},
+     {id:'s14',domain:'nar', amin:4, amax:6, name:'圖卡排序講故事', goal:'按時序排列圖卡並說出含時間、人物、起因、結果的故事', desc:'四至六格圖卡打亂後排序，以「首先、跟住、最後」敘述；再回答故事文法問題。'},
+     {id:'s15',domain:'nar', amin:4, amax:6, name:'故事四格：金魚', goal:'回答直接與間接問題，推論角色感受', desc:'以《金魚》故事提問（幾時、邊個、點解、可以點算），再讓兒童自己改編結局。'},
+     {id:'s16',domain:'nar', amin:3.5,amax:5, name:'為什麼大王', goal:'回答因果問題（點解）', desc:'抽生活情境卡（點解要擔遮？），答對收集貼紙；鼓勵用「因為」開頭完整回答。'},
+     {id:'s17',domain:'nar', amin:5, amax:7, name:'下一步會怎樣？', goal:'預測與推理', desc:'看故事圖到關鍵處停住，讓兒童預測結局並說明理由；比較不同答案的合理性。'},
+     {id:'s18',domain:'pra', amin:2, amax:5, name:'輪流疊疊樂', goal:'輪流、等待及遵守規則的對話參與', desc:'疊積木每人輪流放一塊，過程中練習「到我啦／到你啦」；插話時溫和提示等待。'},
+     {id:'s19',domain:'pra', amin:2.5,amax:5, name:'打電話角色扮演', goal:'開啟話題、回應及維持對話', desc:'以玩具電話練習打招呼、問候、道別；治療師逐步減少提示，讓兒童主導對話。'},
+     {id:'s20',domain:'pra', amin:3, amax:5, name:'小客人來了', goal:'運用社交常規用語及禮貌用語', desc:'扮演招待客人：你好、請坐、多謝、再見；輪換主人與客人角色。'},
+     {id:'s21',domain:'pra', amin:3, amax:6, name:'猜猜我的感受', goal:'辨識與表達情緒詞彙', desc:'抽表情圖卡演出情緒，其他人猜「開心／嬲／驚」；再問「幾時你會咁樣？」連結生活經驗。'},
+     {id:'s22',domain:'oral',amin:1.5,amax:4, name:'咬咬樂開飯', goal:'下顎分級控制及咀嚼', desc:'以不同質地食物（條狀餅、蘋果條）練習咬合，鏡子前觀察下顎動作對稱。'},
+     {id:'s23',domain:'oral',amin:2, amax:5, name:'吹羽毛比賽', goal:'呼吸控制及圓唇動作', desc:'吹羽毛或紙青蛙比遠近，練習圓唇送氣；再以吸管吹紙球接力。'},
+     {id:'s24',domain:'oral',amin:2, amax:5, name:'果醬舔舔樂', goal:'舌頭上抬及左右活動幅度', desc:'果醬塗在嘴唇四周，以舌頭觸舔；對鏡練習向上、向左、向右的單一方向動作。'},
+     {id:'s25',domain:'oral',amin:3, amax:6, name:'音卡釣魚', goal:'正確說出目標聲母字詞', desc:'魚卡印目標音字詞（如 tsʰ：菜、草），釣到後正確說三遍才得分；記錄錯誤音供下次調整。'},
+    ];
+
+    const db = {
+      get(k,d){ try{ const v=JSON.parse(localStorage.getItem(k)); return v??d; }catch(e){ return d; } },
+      set(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+    };
+    function saveChildren(){ db.set('plas_children', JSON.parse(JSON.stringify(children))); }
+    function saveSeeds(){ db.set('plas_seeds', JSON.parse(JSON.stringify(seeds))); }
+
+    const children  = reactive(db.get('plas_children', []));
+    const seeds     = reactive(db.get('plas_seeds', null) || DEFAULT_SEEDS.map(s=>({...s})));
+    const aiCfg     = reactive(Object.assign({type:'openai', base:'https://api.openai.com/v1/chat/completions', key:'', model:'gpt-4o-mini'}, db.get('plas_ai', {})));
+    watch(aiCfg, ()=>db.set('plas_ai', JSON.parse(JSON.stringify(aiCfg))), {deep:true});
+
+    const curChildId = ref(null);
+    const curChild   = computed(()=>children.find(c=>c.id===curChildId.value)||null);
+    const nextSessionNo = computed(()=>(curChild.value?.sessions?.length||0)+1);
+    const ncDlg = ref(false);
+    const nc = reactive({name:'',sex:'',dob:''});
+    const seedDlg = ref(false);
+    const seedForm = reactive({id:null,name:'',domain:'rec',amin:0,amax:6,goal:'',desc:''});
+    const aiDlg = ref(false);
+    const plan = ref(null);
+    const planDate = ref(new Date().toISOString().slice(0,10));
+    const genLoading = ref(false);
+    const genSecs = ref(0);
+    const openGoals = ref(['0']);
+    const finalPlan = ref(null);
+
+    function statesObj(){
+      const m={};
+      PAGES.forEach(p=>p.groups.forEach(g=>g.items.forEach(it=>{ if(it.s) m[it.id]=it.s; })));
+      oralRows.forEach(r=>r.obs.forEach(o=>{ if(o.s) m[o.id]=o.s; }));
+      dailyObs.forEach(o=>{ if(o.s) m[o.id]=o.s; });
+      foodObs.forEach(o=>{ if(o.s) m[o.id]=o.s; });
+      return m;
+    }
+    function applyStates(m){
+      PAGES.forEach(p=>p.groups.forEach(g=>g.items.forEach(it=>{ it.s=(m&&m[it.id])||0; })));
+      oralRows.forEach(r=>r.obs.forEach(o=>{ o.s=(m&&m[o.id])||0; }));
+      dailyObs.forEach(o=>{ o.s=(m&&m[o.id])||0; });
+      foodObs.forEach(o=>{ o.s=(m&&m[o.id])||0; });
+    }
+    function addChild(){
+      if(!nc.name.trim()){ ElementPlus.ElMessage.warning('請填寫姓名'); return; }
+      const c={id:'c'+Date.now(), name:nc.name.trim(), sex:nc.sex, dob:nc.dob, org:f.org, states:{}, sessions:[], createdAt:new Date().toISOString().slice(0,10)};
+      children.unshift(c); saveChildren();
+      curChildId.value=c.id; f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org;
+      nc.name=''; nc.sex=''; nc.dob=''; ncDlg.value=false;
+      ElementPlus.ElMessage.success('檔案已建立，完成評估後按「儲存目前評估到此檔案」');
+    }
+    function saveAssessment(){
+      const c=curChild.value; if(!c) return;
+      Object.assign(c,{name:f.name.trim()||c.name, sex:f.sex, dob:f.dob, org:f.org, dx:f.dx, sev:f.sev,
+        obs:{o1:f.obs1,o2:f.obs2,o3:f.obs3}, states:statesObj(), savedAt:new Date().toISOString().slice(0,10)});
+      saveChildren();
+      ElementPlus.ElMessage.success('評估已存入 '+c.name+' 的檔案');
+    }
+    function loadChild(){
+      const c=curChild.value; if(!c) return;
+      f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org; f.dx=c.dx||''; f.sev=c.sev||'';
+      f.obs1=c.obs?.o1||''; f.obs2=c.obs?.o2||''; f.obs3=c.obs?.o3||'';
+      applyStates(c.states||{}); onDob();
+      ElementPlus.ElMessage.success('已載入 '+c.name+' 的評估記錄');
+    }
+    function delChild(){
+      const i=children.findIndex(c=>c.id===curChildId.value);
+      if(i>-1){ children.splice(i,1); saveChildren(); curChildId.value=null; }
+    }
+    function openSeedDlg(row){
+      Object.assign(seedForm, row?JSON.parse(JSON.stringify(row)):{id:null,name:'',domain:'rec',amin:0,amax:6,goal:'',desc:''});
+      seedDlg.value=true;
+    }
+    function saveSeed(){
+      if(!seedForm.name.trim()){ ElementPlus.ElMessage.warning('請填寫名稱'); return; }
+      if(seedForm.id){ const s=seeds.find(x=>x.id===seedForm.id); if(s) Object.assign(s, JSON.parse(JSON.stringify(seedForm))); }
+      else seeds.push({...seedForm, id:'s'+Date.now()});
+      saveSeeds(); seedDlg.value=false;
+    }
+    function delSeed(row){ const i=seeds.findIndex(x=>x.id===row.id); if(i>-1)seeds.splice(i,1); saveSeeds(); }
+    function resetSeeds(){
+      ElementPlus.ElMessageBox.confirm('確定放棄所有修改，恢復預設範本？','恢復預設',{type:'warning'})
+        .then(()=>{ seeds.splice(0,seeds.length,...DEFAULT_SEEDS.map(s=>({...s}))); saveSeeds(); })
+        .catch(()=>{});
+    }
+    function exportSeeds(){
+      const blob=new Blob([JSON.stringify(seeds,null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='干預種子庫.json';
+      a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    }
+    function importSeeds(file){
+      const rd=new FileReader();
+      rd.onload=e=>{ try{
+        const arr=JSON.parse(e.target.result);
+        if(!Array.isArray(arr)||!arr.length) throw new Error('格式不正確');
+        seeds.splice(0,seeds.length,...arr); saveSeeds();
+        ElementPlus.ElMessage.success('已匯入 '+arr.length+' 項');
+      }catch(err){ ElementPlus.ElMessage.error('匯入失敗：'+err.message); } };
+      rd.readAsText(file.raw);
+    }
+
+    function weakByDomain(band){
+      return ['rec','exp','nar','pra'].map(d=>{
+        const items=[];
+        PAGES.forEach(p=>p.groups.forEach(g=>{ if(g.d!==d) return;
+          g.items.forEach(it=>{ if((it.s===1||it.s===0||it.s===3) && it.a<=band+1) items.push(it.t); }); }));
+        return {d, items};
+      }).filter(x=>x.items.length).sort((a,b)=>b.items.length-a.items.length);
+    }
+    function ruleGoals(band){
+      const out=[];
+      weakByDomain(band).forEach(w=>w.items.slice(0,2).forEach(t=>out.push(`提升${DOM_NAME[w.d]}：能在少許提示下穩定表現「${t}」`)));
+      return out.slice(0,5);
+    }
+    function pickGames(band){
+      const weak=weakByDomain(band).map(w=>w.d);
+      const doms=weak.length?weak:['rec','exp'];
+      const picked=[], used=new Set();
+      for(const d of doms){
+        for(const s of seeds.filter(s=>s.domain===d && s.amin<=band+1 && s.amax>=band)){
+          if(picked.length>=5) break;
+          if(!used.has(s.id)){ picked.push({name:s.name,domain:s.domain,target:s.goal,desc:s.desc}); used.add(s.id); }
+        }
+      }
+      for(const s of seeds){ if(picked.length>=4) break; if(!used.has(s.id)){ picked.push({name:s.name,domain:s.domain,target:s.goal,desc:s.desc}); used.add(s.id); } }
+      return picked;
+    }
+    function rulePlan(band){
+      const goals=[], used=new Set();
+      weakByDomain(band).forEach(w=>{
+        const games=[];
+        for(const s of seeds.filter(s=>s.domain===w.d && s.amin<=band+1 && s.amax>=band)){
+          if(games.length>=2) break;
+          if(!used.has(s.id)){ games.push({name:s.name,domain:s.domain,target:s.goal,desc:s.desc,checked:true}); used.add(s.id); }
+        }
+        if(w.items.length) goals.push({text:`提升${DOM_NAME[w.d]}：能在少許提示下穩定表現「${w.items.slice(0,2).join('、')}」`, games});
+      });
+      for(const s of seeds){
+        if(goals.length && goals.every(g=>g.games.length>=1)) break;
+        const gi=goals.findIndex(g=>g.games.length<1);
+        if(gi>-1 && !used.has(s.id)){ goals[gi].games.push({name:s.name,domain:s.domain,target:s.goal,desc:s.desc,checked:true}); used.add(s.id); }
+      }
+      return {goals};
+    }
+    function domKeyOf(cn){ const e=Object.entries(DOM_NAME).find(([k,v])=>String(cn).includes(v)); return e?e[0]:'rec'; }
+    const AI_PRESETS = [
+      {n:'Claude',    type:'anthropic', base:'https://api.anthropic.com/v1/messages', model:'claude-sonnet-4-5'},
+      {n:'OpenAI',    type:'openai', base:'https://api.openai.com/v1/chat/completions', model:'gpt-4o-mini'},
+      {n:'DeepSeek',  type:'openai', base:'https://api.deepseek.com/v1/chat/completions', model:'deepseek-chat'},
+      {n:'Moonshot',  type:'openai', base:'https://api.moonshot.cn/v1/chat/completions', model:'moonshot-v1-8k'},
+      {n:'智譜 Coding-Claude',  type:'anthropic', base:'https://open.bigmodel.cn/api/anthropic', model:'glm-5.3'},
+      {n:'智譜 Codex',          type:'responses', base:'https://open.bigmodel.cn/api/v1', model:'glm-5.3'},
+      {n:'智譜 Coding-OpenAI',  type:'openai',    base:'https://open.bigmodel.cn/api/coding/paas/v4', model:'glm-5.3'},
+      {n:'智譜 GLM(通用)',      type:'openai',    base:'https://open.bigmodel.cn/api/paas/v4/chat/completions', model:'glm-4-flash'},
+      {n:'阿里通義',  type:'openai', base:'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', model:'qwen-plus'},
+    ];
+    function applyPreset(p){ aiCfg.base=p.base; aiCfg.model=p.model; aiCfg.type=p.type||'openai'; }
+    function normBase(u){
+      let s=(u||'').trim().replace(/\/+$/,'');
+      if(s && !/\/chat\/completions$/.test(s)) s+='/chat/completions';
+      return s;
+    }
+    const aiTesting = ref(false);
+    const aiTest = ref('');
+    const planErr = ref('');
+    async function testAi(){
+      db.set('plas_ai', JSON.parse(JSON.stringify(aiCfg)));
+      aiTesting.value=true; aiTest.value='';
+      try{
+        await callLLM('回應OK', 8);
+        aiTest.value='✅ 連線成功（'+(isAnthropicCfg()?'Anthropic':'OpenAI 相容')+'格式），AI 生成可用';
+      }catch(e){
+        aiTest.value='❌ '+e.message;
+      }
+      aiTesting.value=false;
+    }
+
+    function isAnthropicCfg(){
+      return (aiCfg.type==='anthropic') || /anthropic\.com/.test(aiCfg.base||'');
+    }
+    function isResponsesCfg(url0){
+      return (aiCfg.type==='responses') || /\/responses$/.test(url0||'');
+    }
+    function normAnthropic(u){
+      let s=(u||'').trim().replace(/\/+$/,'');
+      if(!s) return s;
+      if(/\/messages$/.test(s)) return s;
+      if(/\/v1$/.test(s)) return s+'/messages';
+      return s+'/v1/messages';
+    }
+    const AI_TIMEOUT_MS = 180000;  // 單次請求上限 3 分鐘
+    async function callLLM(prompt, maxTokens){
+      let r, txt;
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=>ctrl.abort(), AI_TIMEOUT_MS);
+      const url0=(aiCfg.base||'').trim().replace(/\/+$/,'');
+      if(isResponsesCfg(url0)){
+        const url = /\/responses$/.test(url0) ? url0 : url0+'/responses';
+        try{
+          r=await fetch(url,{method:'POST', signal:ctrl.signal,
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},
+            body:JSON.stringify({model:aiCfg.model, input:prompt, max_output_tokens:maxTokens||4000})});
+        }catch(e){
+          if(e.name==='AbortError') throw new Error('請求逾時（超過 3 分鐘未回應），請重試或更換較快的模型');
+          throw new Error('無法連上 '+url+' — 網路問題或 CORS 被攔截');
+        }
+        if(!r.ok){ const t=await r.text().catch(()=>'');
+          let msg='HTTP '+r.status+'：'+t.slice(0,180);
+          if(r.status===403) msg+=' —— 若你是 Codex/Responses 協議接入，請確認 AI 設定的協議已選「OpenAI Responses」';
+          throw new Error(msg);
+        }
+        const data=await r.json();
+        txt=(data.output||[]).map(o=>(o.content||[]).map(c=>c.text||'').join('')).join('') || data.output_text || '';
+      } else if(isAnthropicCfg()){
+        const url=normAnthropic(aiCfg.base);
+        const key=(aiCfg.key||'').trim();
+        const headers={'content-type':'application/json','anthropic-version':'2023-06-01',
+                       'anthropic-dangerous-direct-browser-access':'true'};
+        if(key.startsWith('sk-ant-oat')) headers['authorization']='Bearer '+key;  // Claude 訂閱 OAuth token
+        else headers['x-api-key']=key;                                            // 一般 API key
+        try{
+          r=await fetch(url,{method:'POST',headers, signal:ctrl.signal,
+            body:JSON.stringify({model:aiCfg.model, max_tokens:maxTokens||4000, messages:[{role:'user',content:prompt}]})});
+        }catch(e){
+          if(e.name==='AbortError') throw new Error('請求逾時（超過 3 分鐘未回應），請重試或更換較快的模型');
+          throw new Error('無法連上 '+url+' — 網路問題或 CORS 被攔截');
+        }
+        if(!r.ok){ const t=await r.text().catch(()=>'');
+          let msg='HTTP '+r.status+'：'+t.slice(0,180);
+          if(r.status===403 || /model_access_denied|invalid model|model.?not.?exist|does not exist/i.test(t))
+            msg+=' —— 模型名稱可能錯誤或帳號未開通該模型，請更換模型名稱（如 glm-4-flash、deepseek-chat、gpt-4o-mini）';
+          throw new Error(msg);
+        }
+        const data=await r.json();
+        txt=(data.content||[]).map(c=>c.text||'').join('');
+      }else{
+        const url=normBase(aiCfg.base);
+        try{
+          r=await fetch(url,{method:'POST', signal:ctrl.signal,
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiCfg.key},
+            body:JSON.stringify({model:aiCfg.model, messages:[{role:'user',content:prompt}], temperature:0.4})});
+        }catch(e){
+          if(e.name==='AbortError') throw new Error('請求逾時（超過 3 分鐘未回應），請重試或更換較快的模型');
+          throw new Error('無法連上 '+url+' — 網路問題，或該服務不允許瀏覽器跨域直連（CORS）。建議換用 OpenAI／DeepSeek 等 API');
+        }
+        if(!r.ok){ const t=await r.text().catch(()=>'');
+          let msg='HTTP '+r.status+'：'+t.slice(0,180);
+          if(r.status===403 || /model_access_denied|invalid model|model.?not.?exist|does not exist/i.test(t))
+            msg+=' —— 模型名稱可能錯誤或帳號未開通該模型，請更換模型名稱（如 glm-4-flash、deepseek-chat、gpt-4o-mini）';
+          throw new Error(msg);
+        }
+        const data=await r.json();
+        txt=data.choices?.[0]?.message?.content||'';
+      }
+      return txt;
+    }
+
+    function parsePlanJSON(txt){
+      let t=(txt||'').replace(/```json|```/gi,'').trim();
+      const tryParse=s=>{ try{ return JSON.parse(s); }catch(e){ return null; } };
+      let j=tryParse(t);
+      if(!j){ const a=t.indexOf('{'), b=t.lastIndexOf('}');
+        if(a>-1 && b>a) j=tryParse(t.slice(a,b+1)); }
+      if(!j){
+        const a=t.indexOf('{');
+        if(a>-1){ let s=t.slice(a).replace(/,\s*$/,'');
+          const open=(s.match(/{/g)||[]).length-(s.match(/}/g)||[]).length;
+          j=tryParse(s+'}'.repeat(Math.max(0,open))); }
+      }
+      if(!j || (!j.goals && !j.games))
+        throw new Error('AI 回應中找不到有效的方案 JSON。回應開頭：「'+(t||'(空回應)').slice(0,120)+'…」— 可再試一次或更換模型');
+      return j;
+    }
+
+    async function aiGenPlan(band){
+      const weak=weakByDomain(band).map(w=>({範疇:DOM_NAME[w.d], 項目:w.items.slice(0,8)}));
+      const lib=seeds.map(s=>({name:s.name, domain:DOM_NAME[s.domain], ages:`${s.amin}-${s.amax}歲`, goal:s.goal}));
+      const prompt=`你是資深兒童言語治療師。根據以下評估結果，為兒童設計一次言語治療課堂的干預方案。\n兒童：${f.name||'未命名'}，${ageLabel.value}。\n評估弱項（需提示或未做到）：${JSON.stringify(weak)}\n可用遊戲／措施種子庫：${JSON.stringify(lib)}\n要求：4-5 個遊戲，優先從種子庫選取或改編，每個遊戲標明要達到的目標；訓練目標 3-5 條並對應弱項；全部用繁體中文。\n只輸出 JSON（無 markdown 代碼框）：{"goals":[{"text":"訓練目標","games":[{"name":"遊戲名稱","domain":"rec|exp|nar|pra|oral","target":"此遊戲要達到的目標","desc":"玩法"}]}]} 每個目標配 1-2 個遊戲，共 3-5 個遊戲。`;
+      let txt=await callLLM(prompt, 4000);
+      const j=parsePlanJSON(txt);
+      const goals=(j.goals||[]).slice(0,6).map(g=>{
+        if(typeof g==='string') return {text:g, games:[]};
+        return {text:g.text||'', games:(g.games||[]).slice(0,5).map(gm=>({name:gm.name||'',domain:domKeyOf(gm.domain),target:gm.target||'',desc:gm.desc||'',checked:true}))};
+      });
+      // 舊格式相容：扁平 games 平均分配到各目標
+      if(goals.length && goals.every(g=>!g.games.length) && (j.games||[]).length){
+        (j.games||[]).slice(0,10).forEach((gm,i)=>{ const gi=i%goals.length;
+          goals[gi].games.push({name:gm.name||'',domain:domKeyOf(gm.domain),target:gm.target||'',desc:gm.desc||'',checked:true}); });
+      }
+      return {goals, reply:j.reply||''};
+    }
+    async function genPlan(useAI){
+      if(!curChild.value){ ElementPlus.ElMessage.warning('請先選擇兒童檔案'); return; }
+      const m=months(); const band=m===null?3:Math.min(6,Math.floor(m/12));
+      genLoading.value=true; planErr.value=''; genSecs.value=0;
+      const tick = setInterval(()=>{ if(genLoading.value) genSecs.value++; else clearInterval(tick); }, 1000);
+      let p=null, src='種子庫';
+      if(useAI && aiCfg.key){
+        try{ p=await aiGenPlan(band); src='AI'; }
+        catch(e){ planErr.value='AI 生成失敗，已自動改用種子庫規則生成。原因：'+e.message; }
+      } else if(useAI){
+        planErr.value='尚未設定 AI（按「AI 設定」填入 API Key），已改用種子庫生成。';
+      }
+      if(!p) p=rulePlan(band);
+      const nGames=p.goals.reduce((n,g)=>n+g.games.length,0);
+      plan.value={no:nextSessionNo.value, date:planDate.value||new Date().toISOString().slice(0,10),
+        curIdx:0,
+        versions:[{label:'V1 · '+src+' 生成', goals:p.goals}],
+        chat:[{role:'assistant', text:`已生成初始方案：${p.goals.length} 個訓練目標、${nGames} 個遊戲。\n可在左側勾選／編輯，或在右側輸入指示讓我修改（例如「第二個目標太難，換簡單的遊戲」）。`}]};
+      openGoals.value=p.goals.map((_,i)=>String(i));
+      finalPlan.value=null;
+      genLoading.value=false; clearInterval(tick);
+    }
+    function curVer(){ return plan.value ? plan.value.versions[plan.value.curIdx] : null; }
+    function newVersion(label){
+      const v=JSON.parse(JSON.stringify(curVer()));
+      const n=plan.value.versions.length;
+      v.label='V'+(n+1)+' · '+label;
+      plan.value.versions.push(v);
+      plan.value.curIdx=n;
+    }
+    function addGoal(){ curVer().goals.push({text:'', games:[]}); openGoals.value.push(String(curVer().goals.length-1)); }
+    function delGoal(gi){ curVer().goals.splice(gi,1); }
+    function addGame(gi){ curVer().goals[gi].games.push({name:'',domain:'rec',target:'',desc:'',checked:true}); }
+    function finalize(){
+      const v=curVer(); if(!v) return;
+      const goals=v.goals.map(g=>({text:g.text||'(未填寫)', games:g.games.filter(x=>x.checked)}));
+      finalPlan.value={no:nextSessionNo.value, date:planDate.value||new Date().toISOString().slice(0,10), goals};
+      ElementPlus.ElMessage.success('已生成最終方案，可儲存為課程記錄');
+    }
+    const chatInput=ref(''); const chatBoxEl=ref(null); const chatLoading=ref(false);
+    async function sendChat(){
+      const t=chatInput.value.trim();
+      if(!t||!plan.value) return;
+      plan.value.chat.push({role:'user', text:t});
+      chatInput.value=''; chatLoading.value=true;
+      await new Promise(r=>setTimeout(r,50));
+      try{
+        if(aiCfg.key){
+          const cur=curVer();
+          const prompt=`你是資深兒童言語治療師。以下是目前干預方案 JSON：\n${JSON.stringify({goals:cur.goals.map(g=>({text:g.text, games:g.games.map(x=>({name:x.name,domain:x.domain,target:x.target,desc:x.desc}))}))})}\n\n可用種子庫遊戲：${JSON.stringify(seeds.map(s=>({name:s.name,domain:DOM_NAME[s.domain],ages:s.amin+'-'+s.amax+'歲',goal:s.goal})))}\n\n治療師指示：${t}\n\n規則：只修改指示涉及的部分，其餘保留原樣；遊戲可從種子庫選取或改編；全部繁體中文。\n只輸出 JSON（無 markdown 代碼框）：{"goals":[{"text":"","games":[{"name":"","domain":"rec|exp|nar|pra|oral","target":"","desc":""}]}],"reply":"簡短說明做了什麼修改"}`;
+          const j=parsePlanJSON(await callLLM(prompt, 4000));
+          newVersion('修改：'+t.slice(0,10));
+          const v=curVer();
+          v.goals=(j.goals||[]).map(g=>({text:g.text||'', games:(g.games||[]).map(gm=>({name:gm.name||'',domain:domKeyOf(gm.domain),target:gm.target||'',desc:gm.desc||'',checked:true}))}));
+          plan.value.chat.push({role:'assistant', text:j.reply||'已按指示更新方案（產生新版本，可於左上切換回舊版）'});
+        } else {
+          const v=curVer();
+          if(/(加|增|多).{0,6}(遊戲|活動)/.test(t)){
+            const used=new Set(v.goals.flatMap(g=>g.games.map(x=>x.name)));
+            let added=0;
+            for(const s of seeds){ if(added>=2) break;
+              if(!used.has(s.name)){ (v.goals[0]?.games||v.goals[0].games).push({name:s.name,domain:s.domain,target:s.goal,desc:s.desc,checked:true}); added++; } }
+            plan.value.chat.push({role:'assistant', text:added?`已從種子庫加入 ${added} 個遊戲到目標 1。`:'種子庫遊戲已全部使用。'});
+          } else {
+            plan.value.chat.push({role:'assistant', text:'尚未設定 AI 金鑰，目前只支援「加入遊戲」類簡單指令；完整對話修改請於 AI 設定填入金鑰。'});
+          }
+        }
+      }catch(e){
+        plan.value.chat.push({role:'assistant', text:'⚠️ 修改失敗：'+e.message+'（目前版本保持不變，可切換版本查看）'});
+      }
+      chatLoading.value=false;
+      await nextTick();
+      if(chatBoxEl.value) chatBoxEl.value.scrollTop = chatBoxEl.value.scrollHeight;
+    }
+
+    function saveSession(){
+      const v=curVer(); if(!plan.value||!curChild.value||!v) return;
+      const goals=v.goals.map(g=>({text:g.text, games:g.games.filter(x=>x.checked)}));
+      curChild.value.sessions.push({
+        id:Date.now(), no:plan.value.no, date:plan.value.date,
+        goals:goals.map(g=>g.text),
+        games:goals.flatMap(g=>g.games.map(gm=>({...gm}))),
+        homeTip:plan.value.homeTip||'', effect:{level:'待評', note:''}
+      });
+      saveChildren();
+      ElementPlus.ElMessage.success('已儲存為第 '+plan.value.no+' 次課程記錄');
+    }
+    function delSession(id){
+      const c=curChild.value; if(!c) return;
+      const i=c.sessions.findIndex(s=>s.id===id); if(i>-1)c.sessions.splice(i,1); saveChildren();
+    }
+    function saveAiCfg(){ db.set('plas_ai', JSON.parse(JSON.stringify(aiCfg))); ElementPlus.ElMessage.success('AI 設定已儲存'); }
+
+    function genReport(){
+      const m=months();
+      repWarn.value = !f.dob ? '⚠️ 尚未填寫出生日期，報告中的實際年齡將顯示「—」。' : '';
+      const am=m===null?0:m;
+      const band=TYP[bandKey(am)];
+      const bandIdx=m===null?null:Math.min(6,Math.floor(m/12));
+      const ageL=ageLabel.value;
+      const name=f.name.trim()||'學生';
+      const stats=['rec','exp','nar','pra'].map(d=>({dom:DOMS[d],st:collect(d)}));
+      const oral=collect('oral');
+      const abn=[...oralRows.flatMap(r=>r.obs),...dailyObs].filter(o=>o.s===1).map(o=>'異常：'+o.t);
+      const foods=foodObs.filter(o=>o.s===1).map(o=>o.t);
+
+      const obs=[['一般觀察／行為表現',f.obs1],['言語特徵／發音情況',f.obs2],['主要關注／建議',f.obs3]]
+        .map(([l,v])=>`<div class="rep-blk"><b>${l}：</b><span class="rev" contenteditable="true" data-ph="未有填寫，點此輸入">${v?esc(v):''}</span></div>`).join('');
+      const dxLine=(f.dx||'未有選擇診斷')+(f.sev?'（'+f.sev+'）':'');
+
+      const gapRows=stats.map(({dom,st})=>
+        `<tr><td style="white-space:nowrap"><b>${dom.name}</b></td><td>${band[dom.typ]}</td><td>${narrative(dom,st,bandIdx)}</td></tr>`).join('');
+      const oralCell=
+        ra('ok','本次可完成',oral.done.length?esc(top3(oral.done)):'—')+
+        ra('hint','提示下完成',oral.part.length?esc(top3(oral.part)):'—')+
+        ra('need','未能完成',oral.none.length?esc(top3(oral.none)):'—')+
+        ra('none','口肌觀察',abn.length?esc(top3(abn)):'各部位未見異常')+
+        (f.oralNote?ra('none','補充',esc(f.oralNote)):'')+
+        ra('none','攝取質地',(foods.length?esc(foods.join('、')):'—')+(f.foodNote?'（'+esc(f.foodNote)+'）':''));
+      const oralRow=`<tr><td style="white-space:nowrap"><b>口肌能力</b></td><td>口肌動作及進食表現按年齡逐步發展。</td><td>${oralCell}</td></tr>`;
+
+      const targets=[];
+      stats.forEach(({dom,st})=>st.part.slice(0,2).forEach(t=>targets.push(`提升${dom.name}：能在少許提示下完成「${esc(t)}」`)));
+      stats.forEach(({dom,st})=>st.none.slice(0,1).forEach(t=>targets.push(`鞏固${dom.name}：認識及穩定表現「${esc(t)}」`)));
+      const goalHtml=targets.length?targets.slice(0,6).map((t,i)=>`${i+1}. ${t}`).join('<br>'):'按評估結果訂立個別化訓練目標（請治療師補充）。';
+
+      const homeHtml=esc(HOME_BASE)+'<br><br>'+['rec','exp','nar','pra'].map(d=>'・'+DOMS[d].name+'：'+esc(DOMS[d].home)).join('<br>');
+
+      repHtml.value=`
+        ${f.org?`<div class="rep-org">${esc(f.org)}</div>`:''}
+        <div class="rep-title">評 估 報 告</div>
+        <div class="rep-meta">
+          <span><b>兒童姓名</b>${esc(name)}</span><span><b>性別</b>${f.sex||'—'}</span>
+          <span><b>出生日期</b>${f.dob||'—'}</span><span><b>評估日期</b>${f.adate||'—'}</span>
+          <span><b>評估時實際年齡</b>${ageL}</span><span><b>評估治療師</b>${esc(f.therapist.trim()||'未有填寫')}</span>
+        </div>
+        <div class="rep-intro" contenteditable="true">${esc(`${name} 於 ${f.adate||'上述日期'} 到本中心接受言語治療評估服務。是次評估以廣東話進行，採用非標準化評估方式；評估當日實際年齡為 ${ageL}。截至評估當天，${name} 的口語能力結果如下：`)}</div>
+        <div class="rep-h">一、臨床觀察、演繹與診斷</div>
+        ${obs}<div class="rep-blk"><b>診斷：</b><span class="rev" contenteditable="true" data-ph="未有選擇診斷，點此輸入">${f.dx?esc(dxLine):''}</span></div>
+        <div class="rep-h">二、發展與年齡差距分析表（同齡參考：${band.age}）</div>
+        <table><tr><th style="width:100px">能力範疇</th><th style="width:27%">同齡典型發展兒童表現</th><th>發展落差分析</th></tr>${gapRows}${oralRow}</table>
+        <div class="rep-h">三、言語治療訓練目標</div>
+        <div contenteditable="true" class="rep-blk">${goalHtml}</div>
+        <div class="rep-h">四、家居建議</div>
+        <div contenteditable="true" class="rep-blk">${homeHtml}</div>
+        <div class="rep-sign">
+          <div class="sig"><div class="lab">評估治療師</div><div class="val">${f.signImg?`<img src="${f.signImg}" style="height:56px;object-fit:contain"/>`:esc(f.therapist.trim()||'　')}</div></div>
+          <div class="sig"><div class="lab">簽署日期</div><div class="val" contenteditable="true">${f.signDate||'　'}</div></div>
+        </div>`;
+    }
+
+    function buildDoc(){
+      if(!repHtml.value) genReport();
+      return `<!DOCTYPE html><html lang="zh-HK"><head><meta charset="utf-8"><title>評估報告</title><style>
+        ${styles}        .rev:empty::before{content:attr(data-ph);color:#c0c4cc}
+  .rep-sign{display:flex;justify-content:flex-end;gap:60px;margin-top:34px;padding:0 20px}
+        .rep-sign .sig{min-width:200px}
+        .rep-sign .lab{font-size:12px;color:#8a94a3;letter-spacing:2px;margin-bottom:30px}
+        .rep-sign .val{border-bottom:1.5px solid #7d8ba1;padding:0 12px 5px;min-height:30px;font-weight:600;letter-spacing:1px}
+        @page{margin:1.5cm}
+      </style></head><body>${repHtml.value.replace(/ contenteditable="true"/g,'')}</body></html>`;
+    }
+
+    async function downloadReport(){
+      if(!repHtml.value) genReport();
+      ElementPlus.ElMessage.info('正在生成 PDF，請稍候…');
+      const holder = document.createElement('div');
+      holder.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;background:#fff;font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif';
+      holder.innerHTML = repHtml.value.replace(/ contenteditable="true"/g,'');
+      holder.querySelectorAll('.rev').forEach(e=>{ if(!e.textContent.trim()) e.textContent='—'; });
+      document.body.appendChild(holder);
+      try{
+        await html2pdf().set({
+          margin:[10,9],
+          filename:`評估報告_${f.name.trim()||'兒童'}_${f.adate||''}.pdf`,
+          image:{type:'jpeg',quality:0.96},
+          html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+          jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+          pagebreak:{mode:['css','legacy']}
+        }).from(holder).save();
+        ElementPlus.ElMessage.success('PDF 已下載');
+      }catch(err){
+        ElementPlus.ElMessage.error('PDF 生成失敗：'+err.message);
+      }
+      holder.remove();
+    }
+
+    function printReport(){
+      const w = window.open('', '_blank');
+      if(!w){ElementPlus.ElMessage.error('瀏覽器阻擋了彈出視窗，請允許後重試');return;}
+      w.document.write(buildDoc());
+      w.document.close(); w.focus();   // 只開預覽，列印由使用者操作
+    }
+
+    return {f,selMax,compact,ageLabels,pages:reactive(PAGES),oralRows:reactive(oralRows),dailyObs:reactive(dailyObs),foodObs:reactive(foodObs),stim:reactive(stim),dxs,dxNote,
+      ageLabel,onDob,pickAge,isDim,cycle,toggleObs,selectAll,onSignFile,printForm,genSecs,testAi,applyPreset,genReport,downloadReport,printReport,repWarn,repHtml,
+      children,seeds,saveChildren,curChildId,curChild,nextSessionNo,ncDlg,nc,seedDlg,seedForm,aiDlg,aiCfg,plan,planDate,genLoading,EFFECTS,DOM_NAME,DOM_TAG,AI_PRESETS,aiTest,aiTesting,planErr,
+      addChild,saveAssessment,loadChild,delChild,openSeedDlg,saveSeed,delSeed,resetSeeds,exportSeeds,importSeeds,genPlan,saveSession,delSession,saveAiCfg,chatInput,chatBoxEl,chatLoading,sendChat,addGoal,delGoal,addGame,finalize,finalPlan,openGoals};
+  }
+});
+__vapp.use(ElementPlus, {locale: ElementPlusLocaleZhCn});
+__vapp.config.errorHandler = (err, inst, info) => {
+  console.error('VUE-ERR:', info, '|', err.message, '| comp:', inst && inst.type && (inst.type.__name || inst.type.name), '\n', err && err.stack);
+};
+__vapp.mount('#app');
+</script>
+</body>
+</html>
