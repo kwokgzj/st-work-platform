@@ -1,0 +1,115 @@
+  [v-cloak]{display:none}
+  /* ══ 臨床藍主題 ══ */
+  :root{
+    --el-color-primary:#2e5e9e;
+    --el-color-primary-light-3:#5d84bd;
+    --el-color-primary-light-5:#96afda;
+    --el-color-primary-light-7:#bfcfe8;
+    --el-color-primary-light-8:#d5e0f1;
+    --el-color-primary-light-9:#eaf0f9;
+    --el-color-primary-dark-2:#254b80;
+    --el-border-radius-base:8px;
+    --el-card-border-radius:14px;
+  }
+  body{margin:0;background:linear-gradient(180deg,#edf2f8 0%,#f5f7fa 320px);font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;color:#303133;font-size:14px}
+
+  /* ══ 頂部橫幅 ══ */
+  .el-header.banner{background:linear-gradient(120deg,#1c3a66 0%,#2e5e9e 55%,#3d6fb0 100%);color:#fff;height:auto!important;padding:20px 32px 17px;box-shadow:0 2px 12px rgba(28,58,102,.28)}
+  .banner .brand{font-size:20px;font-weight:700;letter-spacing:2px}
+  .banner .sub{font-size:12px;opacity:.82;margin-top:4px;letter-spacing:.8px}
+
+  /* ══ 兒童資料列 ══ */
+  .el-header.metabar{background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--el-border-color-lighter);box-shadow:0 1px 6px rgba(16,42,84,.05);height:auto!important;padding:12px 32px;position:sticky;top:0;z-index:100}
+  .meta-form .el-form-item{margin:0 18px 0 0}
+
+  /* ══ 年齡篩選工具列 ══ */
+  .toolbar{background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--el-border-color-lighter);box-shadow:0 2px 10px rgba(16,42,84,.05);padding:12px 32px;position:sticky;top:57px;z-index:99}
+  .toolbar-row{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+  .toolbar .el-check-tag{border-radius:999px;padding:5px 16px;font-size:13px;border:1px solid var(--el-border-color-lighter);font-weight:500;transition:all .18s}
+  .toolbar .el-check-tag:hover{border-color:var(--el-color-primary-light-5);color:var(--el-color-primary)}
+  .toolbar .el-check-tag.is-checked{background:var(--el-color-primary);color:#fff;border-color:var(--el-color-primary)}
+
+  /* ══ 主內容：卡片與留白 ══ */
+  .el-main{padding:26px 32px 90px!important}
+  .plan-ws{display:flex;gap:18px;align-items:flex-start}
+  .plan-left{flex:1.35;min-width:0}
+  .plan-right{flex:1;min-width:300px;display:flex;flex-direction:column;border:1px solid var(--el-border-color-lighter);border-radius:12px;padding:14px;background:#fbfcfe;position:sticky;top:110px}
+  .ver-list{display:flex;flex-wrap:wrap;gap:8px}
+  .ver{border:1.5px solid var(--el-border-color);background:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12.5px;color:var(--el-text-color-regular);transition:.12s}
+  .ver:hover{border-color:var(--el-color-primary)}
+  .ver.on{background:var(--el-color-primary);border-color:var(--el-color-primary);color:#fff;font-weight:600}
+  .goal-title{font-weight:600;margin-right:8px}
+  .game-row{display:flex;gap:10px;align-items:flex-start;margin:10px 0;padding:10px;background:#f8fafc;border:1px solid var(--el-border-color-lighter);border-radius:10px}
+  .game-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .chat-box{height:430px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:10px;background:#f4f6fa;border-radius:10px}
+  .msg{max-width:88%;padding:9px 13px;border-radius:12px;line-height:1.75;font-size:13px;white-space:pre-wrap;word-break:break-word}
+  .msg.user{align-self:flex-end;background:var(--el-color-primary);color:#fff;border-bottom-right-radius:3px}
+  .msg.assistant{align-self:flex-start;background:#fff;border:1px solid var(--el-border-color-lighter);border-bottom-left-radius:3px}
+  .final-box{margin-top:16px;background:#f0f9eb;border:1px solid #e1f3d8;border-radius:12px;padding:14px 20px}
+  .el-collapse-item__content{padding-bottom:14px}
+  .el-main .el-card{margin-bottom:22px;border-radius:14px;border:1px solid var(--el-border-color-lighter);box-shadow:0 1px 2px rgba(16,42,84,.04),0 6px 20px rgba(16,42,84,.05)}
+  .el-main .el-card__body{padding:22px 28px}
+  .el-card__header{padding:16px 28px;border-bottom:1px solid var(--el-border-color-lighter)}
+  .el-table{border-radius:10px}
+  .el-table .el-textarea__inner{box-shadow:none!important;border-radius:6px;line-height:1.7;font-size:13px;padding:5px 9px}
+  .el-table td.el-table__cell{vertical-align:top}
+
+  /* ══ 分組標題 ══ */
+  .grp-h{font-weight:600;font-size:15px;color:#1f2d3d;margin:26px 0 12px;padding-left:11px;border-left:3.5px solid var(--el-color-primary);line-height:1.45;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .grp-h:first-child{margin-top:2px}
+  .grp-h .el-tag{font-weight:400}
+  .grp-h .selall{margin-left:auto;font-size:12.5px}
+  .note{color:var(--el-text-color-secondary);font-size:12.5px;margin:2px 0 10px;line-height:1.8}
+
+  /* ══ 三狀態項目：圓角膠囊 ══ */
+  .items{display:flex;flex-wrap:wrap;gap:12px 14px;line-height:1;padding:2px 0 6px}
+  .el-tag.st{cursor:pointer;user-select:none;border-radius:999px;height:auto;padding:8px 16px;font-size:13.5px;line-height:1.45;border-width:1px;text-align:left;transition:transform .16s,box-shadow .16s,border-color .16s,background-color .16s}
+  .el-tag.st:hover{transform:translateY(-1.5px);box-shadow:0 4px 12px rgba(46,94,158,.16);border-color:var(--el-color-primary-light-3)}
+  .el-tag.st:active{transform:translateY(0);box-shadow:none}
+  .el-tag.st.s2{font-weight:600}
+  .st.dim{opacity:.18;filter:grayscale(.7);pointer-events:none}
+  .el-divider{margin:22px 0}
+
+  .footer{max-width:1280px;margin:0 auto;padding:0 32px 44px;color:var(--el-text-color-secondary);font-size:12px;text-align:center;line-height:1.8}
+
+  /* ══ 報告 ══ */
+  #repDoc{background:#fff;padding:48px 60px;min-height:400px}
+  #repDoc [contenteditable]{border:1px dashed var(--el-border-color);border-radius:8px;padding:8px 12px;line-height:1.9;min-height:22px;transition:border-color .15s}
+  #repDoc [contenteditable]:hover{border-color:var(--el-color-primary-light-5)}
+  #repDoc [contenteditable]:focus{outline:2px solid var(--el-color-primary-light-5);border-style:solid}
+  .rep-org{text-align:center;font-size:18px;font-weight:700;letter-spacing:1px}
+  .rep-title{text-align:center;font-size:23px;font-weight:700;margin:6px 0 16px;letter-spacing:4px;color:var(--el-color-primary-dark-2)}
+  .rep-meta{display:flex;flex-wrap:wrap;gap:8px 30px;margin:14px 0;font-size:14px;background:#f8fafc;border:1px solid var(--el-border-color-lighter);border-radius:10px;padding:12px 18px}
+  .rep-meta b{color:#8a94a3;font-weight:600;margin-right:6px}
+  .rep-h{font-size:16px;font-weight:700;color:var(--el-color-primary);margin:26px 0 10px;border-bottom:2px solid var(--el-color-primary-light-8);padding-bottom:6px}
+  .rep-blk{margin:10px 0}
+  #repDoc table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13px;border-radius:10px;overflow:hidden}
+  #repDoc th,#repDoc td{border:1px solid #d8e0ec;padding:9px 12px;text-align:left;vertical-align:top;line-height:1.8}
+  #repDoc th{background:var(--el-color-primary-light-9);color:var(--el-color-primary);font-weight:600}
+  .rep-intro{margin:14px 0;line-height:2}
+  .rev:empty::before{content:attr(data-ph);color:#c0c4cc}
+  .rep-sign{display:flex;justify-content:flex-end;gap:60px;margin-top:34px;padding:0 20px}
+  .rep-sign .sig{min-width:200px}
+  .rep-sign .lab{font-size:12px;color:#8a94a3;letter-spacing:2px;margin-bottom:30px}
+  .rep-sign .val{border-bottom:1.5px solid #7d8ba1;padding:0 12px 5px;min-height:30px;font-weight:600;letter-spacing:1px;line-height:1.6}
+  .ra{display:flex;gap:9px;margin:6px 0;align-items:flex-start;line-height:1.8}
+  .ra-b{flex:none;font-size:12px;font-weight:600;padding:1px 10px;border-radius:6px;margin-top:3px;white-space:nowrap}
+  .ra-t{flex:1;min-width:0}
+  .ra.ok>.ra-b{background:var(--el-color-primary-light-9);color:var(--el-color-primary)}
+  .ra.hint>.ra-b{background:#fdf3e3;color:#a4700f}
+  .ra.need>.ra-b{background:#fdecec;color:#bb4a4a}
+  .ra.none>.ra-b{background:#f4f4f5;color:#909399}
+  .ra.next>.ra-b{background:var(--el-color-primary);color:#fff}
+  .ra.next{margin-top:9px}
+  .ra.next .ra-t{font-weight:600}
+
+  /* ══ 列印評估表 ══ */
+  @media print{
+    body{background:#fff}
+    .no-print{display:none!important}
+    .el-header.metabar{position:static;border:none;box-shadow:none}
+    .el-header.banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .st,.el-tag,.el-check-tag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body.compact .st.s0{display:none}
+    .el-main .el-card{box-shadow:none;break-inside:avoid}
+  }
