@@ -38,6 +38,12 @@
   .sub-hint{color:var(--el-text-color-secondary);font-size:13px;margin-left:12px;font-weight:400}
   .el-tabs{margin-bottom:6px}
 
+  /* ══ 評估記錄欄 / 查看唯讀態 / 懸浮提交 ══ */
+  .assess-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--el-border-color-lighter);border-radius:12px;padding:12px 18px;margin-bottom:16px}
+  .assess-view .st{pointer-events:none}
+  .assess-view .selall{pointer-events:none;opacity:.4}
+  .assess-float{position:fixed;right:28px;bottom:28px;z-index:200;display:flex;gap:12px;padding:12px 16px;background:#fff;border:1px solid var(--el-border-color-lighter);border-radius:12px;box-shadow:0 8px 28px rgba(16,42,84,.18)}
+
   /* ══ 兒童資料列 ══ */
   .el-header.metabar{background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--el-border-color-lighter);box-shadow:0 1px 6px rgba(16,42,84,.05);height:auto!important;padding:12px 32px;position:sticky;top:0;z-index:100}
   .meta-form .el-form-item{margin:0 18px 0 0}

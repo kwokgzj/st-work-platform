@@ -53,8 +53,6 @@
             <template #header><b>兒童檔案</b><span class="sub-hint">點擊「載入」選擇兒童；選擇後自動載入已存檔的評估</span></template>
             <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
               <el-button type="primary" @click="ncDlg=true">＋ 新增兒童</el-button>
-              <el-button type="primary" plain @click="saveAssessment" :disabled="!curChild">儲存目前評估到此檔案</el-button>
-              <el-button @click="loadChild" :disabled="!curChild">載入此兒童評估</el-button>
               <el-popconfirm title="確定刪除此檔案及全部課程記錄？" @confirm="delChild">
                 <template #reference><el-button type="danger" plain :disabled="!curChild">刪除檔案</el-button></template>
               </el-popconfirm>
@@ -76,24 +74,41 @@
         </section>
 
         <!-- ═══════ 2. 評估 ═══════ -->
-        <section v-show="curPage==='assess'">
+        <section v-show="curPage==='assess'" :class="{'assess-view':assessView}">
           <el-tabs v-model="assessTab">
             <el-tab-pane label="量表評估" name="scale">
+
+            <!-- 評估記錄欄：選兒童後默認載入最新一條；查看態可編輯/重新評估 -->
+            <div class="assess-bar no-print" v-if="curChild">
+              <span style="font-weight:600">評估記錄</span>
+              <el-select v-model="curAssessId" placeholder="選擇評估記錄" style="width:300px"
+                         :disabled="!assessView || !assessList.length" @change="onPickAssess">
+                <el-option v-for="a in assessList" :key="a.id" :label="assessLabel(a)" :value="a.id"></el-option>
+              </el-select>
+              <template v-if="assessView">
+                <el-button :disabled="!curAssessId" @click="startEdit">編輯</el-button>
+                <el-button type="primary" @click="startNew">重新評估</el-button>
+              </template>
+              <el-tag v-else :type="assessMode==='new'?'success':'warning'" effect="dark">
+                {{ assessMode==='new'?'撰寫新評估':'編輯現有評估' }}
+              </el-tag>
+              <span v-if="assessView && !assessList.length" class="note" style="margin:0">尚無評估記錄 — 按「重新評估」開始第一次評估</span>
+            </div>
 
     <!-- ═══════ 兒童資料（需先有兒童檔案）═══ -->
     <el-header class="metabar" height="auto" v-if="curChild">
       <el-form :inline="true" class="meta-form" size="default">
-        <el-form-item label="機構"><el-input v-model="f.org" placeholder="機構名稱" style="width:170px"></el-input></el-form-item>
-        <el-form-item label="姓名"><el-input v-model="f.name" placeholder="兒童姓名" style="width:120px"></el-input></el-form-item>
-        <el-form-item label="出生日期"><el-date-picker v-model="f.dob" type="date" value-format="YYYY-MM-DD" placeholder="選擇日期" style="width:150px" @change="onDob"></el-date-picker></el-form-item>
+        <el-form-item label="機構"><el-input v-model="f.org" placeholder="機構名稱" style="width:170px" :disabled="assessView"></el-input></el-form-item>
+        <el-form-item label="姓名"><el-input v-model="f.name" placeholder="兒童姓名" style="width:120px" :disabled="assessView"></el-input></el-form-item>
+        <el-form-item label="出生日期"><el-date-picker v-model="f.dob" type="date" value-format="YYYY-MM-DD" placeholder="選擇日期" style="width:150px" :disabled="assessView" @change="onDob"></el-date-picker></el-form-item>
         <el-form-item label="年齡"><el-tag :type="f.dob?'primary':'info'" :effect="f.dob?'dark':'plain'" size="large" style="font-weight:700">{{ ageLabel }}</el-tag></el-form-item>
         <el-form-item label="性別">
-          <el-radio-group v-model="f.sex">
+          <el-radio-group v-model="f.sex" :disabled="assessView">
             <el-radio-button value="男">男</el-radio-button>
             <el-radio-button value="女">女</el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="評估日期"><el-date-picker v-model="f.adate" type="date" value-format="YYYY-MM-DD" style="width:150px"></el-date-picker></el-form-item>
+        <el-form-item label="評估日期"><el-date-picker v-model="f.adate" type="date" value-format="YYYY-MM-DD" style="width:150px" :disabled="assessView"></el-date-picker></el-form-item>
       </el-form>
     </el-header>
 
@@ -123,11 +138,11 @@
           <el-card shadow="never">
             <template #header><b>臨床觀察 (Clinical Observation)</b></template>
             <div class="grp-h">一般觀察 / 行為表現</div>
-            <el-input v-model="f.obs1" type="textarea" :rows="3" placeholder="記錄兒童的一般行為、注意力、配合度、社交互動等臨床觀察…"></el-input>
+            <el-input v-model="f.obs1" type="textarea" :rows="3" :disabled="assessView" placeholder="記錄兒童的一般行為、注意力、配合度、社交互動等臨床觀察…"></el-input>
             <div class="grp-h">言語特徵 / 發音情況</div>
-            <el-input v-model="f.obs2" type="textarea" :rows="3" placeholder="記錄兒童的發音清晰度、音韻過程、語速、語調、聲音品質等特徵…"></el-input>
+            <el-input v-model="f.obs2" type="textarea" :rows="3" :disabled="assessView" placeholder="記錄兒童的發音清晰度、音韻過程、語速、語調、聲音品質等特徵…"></el-input>
             <div class="grp-h">主要關注 / 建議</div>
-            <el-input v-model="f.obs3" type="textarea" :rows="3" placeholder="記錄治療師的主要關注點、初步印象、後續建議或轉介意見…"></el-input>
+            <el-input v-model="f.obs3" type="textarea" :rows="3" :disabled="assessView" placeholder="記錄治療師的主要關注點、初步印象、後續建議或轉介意見…"></el-input>
           </el-card>
 
 
@@ -163,12 +178,12 @@
               <div class="items">
                 <span class="note" style="margin-right:4px">日常表現（預設無，有才點選）：</span>
                 <el-tag v-for="o in dailyObs" :key="o.t" class="st" size="large" effect="plain" :type="o.s===1?'danger':'info'" @click.capture="toggleObs(o)">{{ o.s===1?'✗ 有 ':'✓ 無 ' }}{{ o.t }}</el-tag>
-                <el-input v-model="f.oralNote" placeholder="請補充…" style="width:230px" size="small"></el-input>
+                <el-input v-model="f.oralNote" placeholder="請補充…" style="width:230px" size="small" :disabled="assessView"></el-input>
               </div>
               <div class="items" style="margin-top:8px">
                 <span class="note" style="margin-right:4px">進食食物種類／質地（有攝取請點選）：</span>
                 <el-tag v-for="o in foodObs" :key="o.t" class="st" size="large" effect="plain" :type="o.s===1?'primary':'info'" @click.capture="toggleObs(o)">{{ (o.s===1?'✓ ':'○ ') + o.t }}</el-tag>
-                <el-input v-model="f.foodNote" placeholder="請補充…" style="width:230px" size="small"></el-input>
+                <el-input v-model="f.foodNote" placeholder="請補充…" style="width:230px" size="small" :disabled="assessView"></el-input>
               </div>
               <el-divider></el-divider>
               <el-collapse>
@@ -177,11 +192,11 @@
                   <el-table :data="stim" size="small" border>
                     <el-table-column prop="s" label="聲母" width="70" align="center"></el-table-column>
                     <el-table-column v-for="(v,i) in ['_a','_e','_i','_o','_u','隔離']" :key="v" :label="v" width="60" align="center">
-                      <template #default="{row}"><el-checkbox v-model="row.c[i]"></el-checkbox></template>
+                      <template #default="{row}"><el-checkbox v-model="row.c[i]" :disabled="assessView"></el-checkbox></template>
                     </el-table-column>
                     <el-table-column prop="wi" label="詞首 WI"></el-table-column>
                     <el-table-column prop="wf" label="詞尾 WF"></el-table-column>
-                    <el-table-column label="% correct" width="100"><template #default="{row}"><el-input v-model="row.pct" size="small"></el-input></template></el-table-column>
+                    <el-table-column label="% correct" width="100"><template #default="{row}"><el-input v-model="row.pct" size="small" :disabled="assessView"></el-input></template></el-table-column>
                   </el-table>
                 </el-collapse-item>
               </el-collapse>
@@ -192,13 +207,13 @@
         <!-- ═══════ 診斷 ═══════ -->
           <el-card shadow="never">
             <template #header><b>診斷 (Diagnosis)</b><span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">選擇診斷類別及嚴重程度</span></template>
-            <el-select v-model="f.dx" placeholder="選擇診斷類別" style="width:100%;max-width:560px" size="large" clearable>
+            <el-select v-model="f.dx" placeholder="選擇診斷類別" style="width:100%;max-width:560px" size="large" clearable :disabled="assessView">
               <el-option v-for="d in dxs" :key="d.k" :label="d.k + ') ' + d.label" :value="d.label"></el-option>
             </el-select>
             <el-alert v-if="dxNote" :title="dxNote" type="info" :closable="false" style="margin:12px 0;line-height:1.8"></el-alert>
             <div style="display:flex;align-items:center;gap:12px;margin:14px 0">
               <span style="font-weight:600">嚴重程度：</span>
-              <el-radio-group v-model="f.sev">
+              <el-radio-group v-model="f.sev" :disabled="assessView">
                 <el-radio-button value="輕度">輕度 (Mild)</el-radio-button>
                 <el-radio-button value="中度">中度 (Moderate)</el-radio-button>
                 <el-radio-button value="嚴重">嚴重 (Severe)</el-radio-button>
@@ -212,16 +227,16 @@
           <el-card shadow="never">
             <template #header><b>評估治療師 (Assessing Therapist)</b></template>
             <el-form label-width="140px" style="max-width:560px">
-              <el-form-item label="治療師姓名"><el-input v-model="f.therapist"></el-input></el-form-item>
-              <el-form-item label="專業資格 / 執照"><el-input v-model="f.license"></el-input></el-form-item>
-              <el-form-item label="簽署日期"><el-date-picker v-model="f.signDate" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item>
-              <el-form-item label="簽名 / 簽署"><el-input v-model="f.signature"></el-input></el-form-item>
+              <el-form-item label="治療師姓名"><el-input v-model="f.therapist" :disabled="assessView"></el-input></el-form-item>
+              <el-form-item label="專業資格 / 執照"><el-input v-model="f.license" :disabled="assessView"></el-input></el-form-item>
+              <el-form-item label="簽署日期"><el-date-picker v-model="f.signDate" type="date" value-format="YYYY-MM-DD" style="width:100%" :disabled="assessView"></el-date-picker></el-form-item>
+              <el-form-item label="簽名 / 簽署"><el-input v-model="f.signature" :disabled="assessView"></el-input></el-form-item>
               <el-form-item label="手寫簽名">
-                <el-upload :auto-upload="false" :show-file-list="false" accept="image/*" :on-change="onSignFile">
-                  <el-button size="small">匯入手寫簽名圖片</el-button>
+                <el-upload :auto-upload="false" :show-file-list="false" accept="image/*" :on-change="onSignFile" :disabled="assessView">
+                  <el-button size="small" :disabled="assessView">匯入手寫簽名圖片</el-button>
                 </el-upload>
                 <img v-if="f.signImg" :src="f.signImg" style="height:46px;margin-left:12px;border:1px dashed var(--el-border-color);border-radius:6px;padding:4px;background:#fff"/>
-                <el-button v-if="f.signImg" link type="danger" size="small" @click="f.signImg=''">移除</el-button>
+                <el-button v-if="f.signImg && !assessView" link type="danger" size="small" @click="f.signImg=''">移除</el-button>
               </el-form-item>
             </el-form>
           </el-card>
@@ -246,10 +261,27 @@
               <el-empty v-else description="尚未生成報告 — 完成評估記錄後按「生成家長報告」"></el-empty>
             </el-tab-pane>
           </el-tabs>
-        </section>
 
-        <!-- ═══════ 3. 干預 ═══════ -->
+          <!-- 新評估/編輯：右下角懸浮 取消/提交 -->
+          <div class="assess-float no-print" v-if="!assessView">
+            <el-button @click="cancelAssess">取消</el-button>
+            <el-button type="primary" @click="submitAssess">提交評估</el-button>
+          </div>
+        </section>
         <section v-show="curPage==='interv'">
+          <div class="assess-bar">
+            <span style="font-weight:600">目前兒童</span>
+            <el-select v-model="curChildId" placeholder="選擇兒童檔案" style="width:240px" clearable>
+              <el-option v-for="c in children" :key="c.id" :label="c.name" :value="c.id"></el-option>
+            </el-select>
+            <el-divider direction="vertical"></el-divider>
+            <span style="font-weight:600">關聯評估</span>
+            <el-select v-model="intervAssessId" placeholder="無評估記錄" style="width:280px" :disabled="!curChild||!assessList.length">
+              <el-option v-for="a in assessList" :key="a.id" :label="assessLabel(a)" :value="a.id"></el-option>
+            </el-select>
+            <span v-if="curChild" class="note" style="margin:0">{{ curChild.name }}・{{ ageLabel }}｜已存 {{ curChild.sessions?.length||0 }} 次課程</span>
+            <span v-else class="note" style="margin:0">尚未選擇兒童 — 生成方案與課程記錄需先選擇</span>
+          </div>
           <el-tabs v-model="intervTab">
             <el-tab-pane label="干預方案・課程記錄" name="plan">
 
@@ -339,6 +371,9 @@
   <el-table :data="curChild?.sessions||[]" size="small" border v-if="curChild">
     <el-table-column prop="no" label="節數" width="64" align="center"></el-table-column>
     <el-table-column prop="date" label="日期" width="110"></el-table-column>
+    <el-table-column label="關聯評估" width="120">
+      <template #default="{row}"><span class="note">{{ assessById(row.assessId)?.adate || '—' }}</span></template>
+    </el-table-column>
     <el-table-column label="訓練目標" min-width="220">
       <template #default="{row}"><span class="note">{{ row.goals.join('；') }}</span></template>
     </el-table-column>
@@ -516,6 +551,13 @@ const stim     = reactive(stimD);
     const assessTab  = ref('scale');
     const intervTab  = ref('plan');
     const pageTitles = {children:'兒童檔案', assess:'評估', interv:'干預', settings:'設置'};
+    // 評估記錄：view 查看唯讀 / edit 編輯現有記錄 / new 撰寫新評估
+    const assessMode  = ref('view');
+    const assessView  = computed(()=>assessMode.value==='view');
+    const curAssessId = ref(null);
+    const assessList  = computed(()=>curChild.value?.assessments||[]);
+    const intervAssessId = ref(null);   // 干預方案/課程關聯的評估記錄（默認最新）
+    let prevAssessId = null;   // 「重新評估」前的選中記錄，取消時回到原處
 
     const f = reactive({org:'',name:'',dob:'',adate:new Date().toISOString().slice(0,10),sex:'',obs1:'',obs2:'',obs3:'',
       dx:'',sev:'',therapist:'',license:'',signDate:new Date().toISOString().slice(0,10),signature:'',oralNote:'',foodNote:''});
@@ -618,9 +660,9 @@ const stim     = reactive(stimD);
       catch(e){ console.warn('載入兒童列表失敗：', e.message); }
     }
     watch(curChildId, async id=>{
-      if(!id){ curChild.value=null; return; }
+      if(!id){ curChild.value=null; curAssessId.value=null; intervAssessId.value=null; assessMode.value='view'; return; }
       const c=await api.getChild(id).catch(e=>{ ElementPlus.ElMessage.error('載入檔案失敗：'+e.message); return null; });
-      if(curChildId.value===id){ curChild.value=c; if(c){ counts[c.id]=(c.sessions?.length||0); applyChildToForm(c); } }
+      if(curChildId.value===id){ curChild.value=c; if(c){ counts[c.id]=(c.sessions?.length||0); normalizeAssessments(c); applyChildToForm(c); viewAssess(null); intervAssessId.value=curAssessId.value; } }
     });
     async function saveCurChild(){           // 整份替換寫回後端（PUT）
       const c=curChild.value; if(!c) return false;
@@ -665,29 +707,66 @@ const stim     = reactive(stimD);
       children.unshift(c); counts[c.id]=0;
       curChildId.value=c.id; f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org;
       nc.name=''; nc.sex=''; nc.dob=''; ncDlg.value=false;
-      ElementPlus.ElMessage.success('檔案已建立，完成評估後按「儲存目前評估到此檔案」');
-    }
-    async function saveAssessment(){
-      const c=curChild.value; if(!c) return;
-      Object.assign(c,{name:f.name.trim()||c.name, sex:f.sex, dob:f.dob, org:f.org, dx:f.dx, sev:f.sev,
-        adate:f.adate, obs:{o1:f.obs1,o2:f.obs2,o3:f.obs3}, states:statesObj(), savedAt:new Date().toLocaleString('zh-HK',{hour12:false}),
-        therapist:f.therapist, license:f.license, signDate:f.signDate, signature:f.signature, signImg:f.signImg,
-        oralNote:f.oralNote, foodNote:f.foodNote});
-      if(await saveCurChild()) ElementPlus.ElMessage.success('評估已存入 '+c.name+' 的檔案（'+c.savedAt+'）');
+      curPage.value='assess';   // 建檔後直接到評估頁
+      ElementPlus.ElMessage.success('檔案已建立，按「重新評估」開始第一次評估');
     }
     function applyChildToForm(c){
-      f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org; f.dx=c.dx||''; f.sev=c.sev||'';
-      f.obs1=c.obs?.o1||''; f.obs2=c.obs?.o2||''; f.obs3=c.obs?.o3||'';
-      f.adate=c.adate||new Date().toISOString().slice(0,10);
-      f.therapist=c.therapist||''; f.license=c.license||''; f.signDate=c.signDate||new Date().toISOString().slice(0,10);
-      f.signature=c.signature||''; f.signImg=c.signImg||''; f.oralNote=c.oralNote||''; f.foodNote=c.foodNote||'';
-      applyStates(c.states||{}); onDob();
+      f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org;
+      onDob();
     }
-    function loadChild(){
+    // ── 評估記錄（child.assessments[]，舊數據無此欄時自動包裝為一條記錄）──
+    function assessLabel(a){ return (a.adate||'未填日期')+' 評估'+(a.savedAt?'（存檔 '+a.savedAt+'）':''); }
+    function assessById(id){ return (curChild.value?.assessments||[]).find(a=>a.id===id); }
+    function normalizeAssessments(c){
+      if(Array.isArray(c.assessments)) return;
+      const has=c.states&&Object.keys(c.states).some(k=>k!=='undefined');
+      if(has||c.savedAt||c.dx){
+        c.assessments=[{id:'a0',adate:c.adate||'',states:c.states||{},obs:c.obs||{},dx:c.dx||'',sev:c.sev||'',
+          therapist:c.therapist||'',license:c.license||'',signDate:c.signDate||'',signature:c.signature||'',signImg:c.signImg||'',
+          oralNote:c.oralNote||'',foodNote:c.foodNote||'',savedAt:c.savedAt||'',ts:0}];
+        (c.sessions||[]).forEach(s=>{ if(!s.assessId) s.assessId='a0'; });   // 舊課程歸入唯一評估
+      } else c.assessments=[];
+    }
+    function applyAssessToForm(a){
+      f.dx=a.dx||''; f.sev=a.sev||''; f.adate=a.adate||new Date().toISOString().slice(0,10);
+      f.obs1=a.obs?.o1||''; f.obs2=a.obs?.o2||''; f.obs3=a.obs?.o3||'';
+      f.therapist=a.therapist||''; f.license=a.license||''; f.signDate=a.signDate||new Date().toISOString().slice(0,10);
+      f.signature=a.signature||''; f.signImg=a.signImg||''; f.oralNote=a.oralNote||''; f.foodNote=a.foodNote||'';
+      applyStates(a.states||{}); onDob();
+    }
+    function viewAssess(id){
+      const list=assessList.value;
+      const a=id?list.find(x=>x.id===id)
+        :[...list].sort((x,y)=>(y.ts||0)-(x.ts||0)||(y.adate||'').localeCompare(x.adate||''))[0];   // 默認最新一條
+      curAssessId.value=a?a.id:null;
+      if(a) applyAssessToForm(a); else applyAssessToForm({states:{}});
+      assessMode.value='view';
+    }
+    function onPickAssess(id){ const a=id&&assessList.value.find(x=>x.id===id); if(a){ applyAssessToForm(a); assessMode.value='view'; } }
+    function startEdit(){ if(curAssessId.value) assessMode.value='edit'; }
+    function startNew(){ prevAssessId=curAssessId.value; curAssessId.value=null; applyAssessToForm({states:{}}); assessMode.value='new'; }
+    function cancelAssess(){ viewAssess(prevAssessId); }
+    async function submitAssess(){
       const c=curChild.value; if(!c) return;
-      applyChildToForm(c);
-      const hasStates=c.states&&Object.keys(c.states).some(k=>k!=='undefined');  // 舊版壞數據只有 undefined 鍵，視同未存過
-      ElementPlus.ElMessage.success('已載入 '+c.name+' 的評估記錄'+(hasStates?'（存檔：'+c.savedAt+'）':'（此檔案尚未存過評估，各項為空白）'));
+      const rec={adate:f.adate, states:statesObj(), obs:{o1:f.obs1,o2:f.obs2,o3:f.obs3}, dx:f.dx, sev:f.sev,
+        therapist:f.therapist, license:f.license, signDate:f.signDate, signature:f.signature, signImg:f.signImg,
+        oralNote:f.oralNote, foodNote:f.foodNote, savedAt:new Date().toLocaleString('zh-HK',{hour12:false}), ts:Date.now()};
+      Object.assign(c,{name:f.name.trim()||c.name, sex:f.sex, dob:f.dob, org:f.org});
+      if(assessMode.value==='edit'){
+        const a=c.assessments.find(x=>x.id===curAssessId.value);
+        if(!a){ ElementPlus.ElMessage.error('找不到要更新的評估記錄'); return; }
+        Object.assign(a, rec);
+      }else{
+        rec.id='a'+Date.now();
+        c.assessments.push(rec);
+        curAssessId.value=rec.id;
+      }
+      c.savedAt=rec.savedAt;   // 頂欄「評估存檔」顯示用
+      if(await saveCurChild()){
+        assessMode.value='view';
+        intervAssessId.value=curAssessId.value;   // 新提交的評估成為干預默認關聯
+        ElementPlus.ElMessage.success('評估已提交：'+c.name+'（'+rec.adate+'）');
+      }
     }
     async function delChild(){
       const i=children.findIndex(c=>c.id===curChildId.value);
@@ -859,6 +938,7 @@ const stim     = reactive(stimD);
       if(!p) p=rulePlan(band);
       const nGames=p.goals.reduce((n,g)=>n+g.games.length,0);
       plan.value={no:nextSessionNo.value, date:planDate.value||new Date().toISOString().slice(0,10),
+        assessId:intervAssessId.value||null,
         curIdx:0,
         versions:[{label:'V1 · '+src+' 生成', goals:p.goals}],
         chat:[{role:'assistant', text:`已生成初始方案：${p.goals.length} 個訓練目標、${nGames} 個遊戲。\n可在左側勾選／編輯，或在右側輸入指示讓我修改（例如「第二個目標太難，換簡單的遊戲」）。`}]};
@@ -924,6 +1004,7 @@ const stim     = reactive(stimD);
       const goals=v.goals.map(g=>({text:g.text, games:g.games.filter(x=>x.checked)}));
       curChild.value.sessions.push({
         id:Date.now(), no:plan.value.no, date:plan.value.date,
+        assessId:plan.value.assessId||intervAssessId.value||null,
         goals:goals.map(g=>g.text),
         games:goals.flatMap(g=>g.games.map(gm=>({...gm}))),
         homeTip:plan.value.homeTip||'', effect:{level:'待評', note:''}
