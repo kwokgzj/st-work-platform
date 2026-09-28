@@ -41,12 +41,6 @@
       <!-- ═══════ 頂欄 ═══════ -->
       <el-header class="topbar no-print" height="auto">
         <span class="crumb">首頁 / <b>{{ pageTitles[curPage] }}</b></span>
-        <el-divider direction="vertical"></el-divider>
-        <span style="font-weight:600">當前兒童</span>
-        <el-select v-model="curChildId" placeholder="選擇兒童檔案" style="width:210px" clearable filterable>
-          <el-option v-for="c in children" :key="c.id" :label="c.name" :value="c.id"></el-option>
-        </el-select>
-        <span v-if="curChild" class="note" style="margin:0">{{ curChild.sex||'—' }}・{{ curChild.dob||'—' }}・{{ ageLabel }}｜已存 {{ curChild.sessions?.length||0 }} 次課程<span v-if="curChild.savedAt">｜評估存檔：{{ curChild.savedAt }}</span><span v-else>｜尚未存評估</span></span>
         <span class="sp"></span>
       </el-header>
 
@@ -83,21 +77,30 @@
           <el-tabs v-model="assessTab">
             <el-tab-pane label="量表評估" name="scale">
 
-            <!-- 評估記錄欄：選兒童後默認載入最新一條；查看態可編輯/重新評估 -->
-            <div class="assess-bar no-print" v-if="curChild">
-              <span style="font-weight:600">評估記錄</span>
-              <el-select v-model="curAssessId" placeholder="選擇評估記錄" style="width:300px"
-                         :disabled="!assessView || !assessList.length" @change="onPickAssess">
-                <el-option v-for="a in assessList" :key="a.id" :label="assessLabel(a)" :value="a.id"></el-option>
+            <!-- 兒童/評估記錄欄：選兒童後默認載入最新一條；查看態可編輯/重新評估 -->
+            <div class="assess-bar no-print">
+              <span style="font-weight:600">當前兒童</span>
+              <el-select v-model="curChildId" placeholder="選擇兒童檔案" style="width:200px" clearable filterable>
+                <el-option v-for="c in children" :key="c.id" :label="c.name" :value="c.id"></el-option>
               </el-select>
-              <template v-if="assessView">
-                <el-button :disabled="!curAssessId" @click="startEdit">編輯</el-button>
-                <el-button type="primary" @click="startNew">重新評估</el-button>
+              <template v-if="curChild">
+                <span class="note" style="margin:0">{{ curChild.sex||'—' }}・{{ curChild.dob||'—' }}・{{ ageLabel }}</span>
+                <el-divider direction="vertical"></el-divider>
+                <span style="font-weight:600">評估記錄</span>
+                <el-select v-model="curAssessId" placeholder="選擇評估記錄" style="width:300px"
+                           :disabled="!assessView || !assessList.length" @change="onPickAssess">
+                  <el-option v-for="a in assessList" :key="a.id" :label="assessLabel(a)" :value="a.id"></el-option>
+                </el-select>
+                <template v-if="assessView">
+                  <el-button :disabled="!curAssessId" @click="startEdit">編輯</el-button>
+                  <el-button type="primary" @click="startNew">重新評估</el-button>
+                </template>
+                <el-tag v-else :type="assessMode==='new'?'success':'warning'" effect="dark">
+                  {{ assessMode==='new'?'撰寫新評估':'編輯現有評估' }}
+                </el-tag>
+                <span v-if="assessView && !assessList.length" class="note" style="margin:0">尚無評估記錄 — 按「重新評估」開始第一次評估</span>
               </template>
-              <el-tag v-else :type="assessMode==='new'?'success':'warning'" effect="dark">
-                {{ assessMode==='new'?'撰寫新評估':'編輯現有評估' }}
-              </el-tag>
-              <span v-if="assessView && !assessList.length" class="note" style="margin:0">尚無評估記錄 — 按「重新評估」開始第一次評估</span>
+              <span v-else class="note" style="margin:0">請先選擇兒童檔案（或到「兒童檔案」頁新增）</span>
             </div>
 
     <!-- ═══════ 兒童資料（需先有兒童檔案）═══ -->
@@ -275,12 +278,19 @@
         </section>
         <section v-show="curPage==='interv'">
           <div class="assess-bar">
-            <span style="font-weight:600">關聯評估</span>
-            <el-select v-model="intervAssessId" placeholder="無評估記錄" style="width:280px" :disabled="!curChild||!assessList.length">
-              <el-option v-for="a in assessList" :key="a.id" :label="assessLabel(a)" :value="a.id"></el-option>
+            <span style="font-weight:600">當前兒童</span>
+            <el-select v-model="curChildId" placeholder="選擇兒童檔案" style="width:200px" clearable filterable>
+              <el-option v-for="c in children" :key="c.id" :label="c.name" :value="c.id"></el-option>
             </el-select>
-            <span v-if="!curChild" class="note" style="margin:0">請先在頂欄選擇兒童，生成方案與課程記錄需依評估結果</span>
-            <span v-else-if="!assessList.length" class="note" style="margin:0">該兒童尚無評估記錄 — 可先到「評估」頁完成評估，或直接依種子庫生成方案</span>
+            <template v-if="curChild">
+              <span class="note" style="margin:0">{{ curChild.sex||'—' }}・{{ curChild.dob||'—' }}・{{ ageLabel }}｜已存 {{ curChild.sessions?.length||0 }} 次課程</span>
+              <el-divider direction="vertical"></el-divider>
+              <span style="font-weight:600">關聯評估</span>
+              <el-select v-model="intervAssessId" placeholder="無評估記錄" style="width:280px" :disabled="!assessList.length">
+                <el-option v-for="a in assessList" :key="a.id" :label="assessLabel(a)" :value="a.id"></el-option>
+              </el-select>
+            </template>
+            <span v-else class="note" style="margin:0">請先選擇兒童檔案，生成方案與課程記錄需依評估結果</span>
           </div>
           <el-tabs v-model="intervTab">
             <el-tab-pane label="干預方案・課程記錄" name="plan">
