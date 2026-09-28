@@ -124,6 +124,8 @@ def test_seeds_validation_and_settings_default():
 
 
 def test_ai_chat_wiring(monkeypatch=None):
+    # 歸零配置（同一進程內前面的測試可能已 PUT 過 AI 設定，避免順序耦合）
+    client.put("/api/settings/ai", json={"type": "openai", "base": "", "key": "", "model": ""})
     # 未配置 → 400
     r = client.post("/api/ai/chat", json={"prompt": "hi"})
     assert r.status_code == 400
