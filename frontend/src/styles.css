@@ -13,10 +13,30 @@
   }
   body{margin:0;background:linear-gradient(180deg,#edf2f8 0%,#f5f7fa 320px);font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;color:#303133;font-size:14px}
 
-  /* ══ 頂部橫幅 ══ */
-  .el-header.banner{background:linear-gradient(120deg,#1c3a66 0%,#2e5e9e 55%,#3d6fb0 100%);color:#fff;height:auto!important;padding:20px 32px 17px;box-shadow:0 2px 12px rgba(28,58,102,.28)}
-  .banner .brand{font-size:20px;font-weight:700;letter-spacing:2px}
-  .banner .sub{font-size:12px;opacity:.82;margin-top:4px;letter-spacing:.8px}
+  /* ══ 左側菜單欄佈局 ══ */
+  .app-shell{height:100vh}
+  .sidebar{width:216px;min-width:216px;background:linear-gradient(180deg,#16263f,#1b2e4d);display:flex;flex-direction:column;overflow-y:auto}
+  .sidebar .brand{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .sidebar .logo{width:34px;height:34px;border-radius:8px;background:var(--el-color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none}
+  .sidebar .brand b{color:#fff;font-size:14.5px;display:block;line-height:1.4}
+  .sidebar .brand span{font-size:11px;color:#8fa1bd;display:block;margin-top:2px}
+  .sidebar .nav{padding:12px 10px;flex:1}
+  .sidebar .grp-label{font-size:11px;color:#5c6f8e;padding:10px 12px 6px;letter-spacing:1px}
+  .sidebar .nav a{display:flex;align-items:center;gap:11px;padding:11px 12px;margin-bottom:4px;border-radius:8px;color:#9fb0c9;cursor:pointer;font-size:14px;transition:.15s;user-select:none}
+  .sidebar .nav a:hover{background:rgba(255,255,255,.06);color:#dbe4f0}
+  .sidebar .nav a.active{background:var(--el-color-primary);color:#fff;font-weight:600}
+  .sidebar .nav a svg{width:18px;height:18px;flex:none}
+  .sidebar .me{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+  .sidebar .me .avatar{width:32px;height:32px;border-radius:50%;background:var(--el-color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:none}
+  .sidebar .me b{color:#e5edf7;font-size:13px;display:block}
+  .sidebar .me span{color:#8fa1bd;font-size:11px}
+  .main-col{min-width:0}
+  .el-header.topbar{background:#fff;border-bottom:1px solid var(--el-border-color-lighter);height:auto!important;padding:0 32px;min-height:52px;display:flex;align-items:center;gap:10px}
+  .topbar .crumb{color:var(--el-text-color-secondary);font-size:13.5px}
+  .topbar .crumb b{color:var(--el-text-color-primary);font-weight:600}
+  .topbar .sp{flex:1}
+  .sub-hint{color:var(--el-text-color-secondary);font-size:13px;margin-left:12px;font-weight:400}
+  .el-tabs{margin-bottom:6px}
 
   /* ══ 兒童資料列 ══ */
   .el-header.metabar{background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--el-border-color-lighter);box-shadow:0 1px 6px rgba(16,42,84,.05);height:auto!important;padding:12px 32px;position:sticky;top:0;z-index:100}
@@ -107,8 +127,9 @@
   @media print{
     body{background:#fff}
     .no-print{display:none!important}
+    .sidebar,.el-header.topbar{display:none!important}
+    .app-shell,.main-col,.el-main.content{height:auto!important;overflow:visible!important}
     .el-header.metabar{position:static;border:none;box-shadow:none}
-    .el-header.banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .st,.el-tag,.el-check-tag{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     body.compact .st.s0{display:none}
     .el-main .el-card{box-shadow:none;break-inside:avoid}

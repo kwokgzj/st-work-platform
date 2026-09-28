@@ -1,11 +1,84 @@
 <template>
-  <el-container>
+  <el-container class="app-shell">
 
-    <!-- ═══════ 頂部橫幅 ═══════ -->
-    <el-header class="banner" height="auto">
-      <div class="brand">學前兒童口語評估量表</div>
-      <div class="sub">Preschool Language Assessment Scale（0–6 歲）｜言語治療評估工具</div>
-    </el-header>
+    <!-- ═══════ 左側菜單欄 ═══════ -->
+    <aside class="sidebar no-print">
+      <div class="brand">
+        <div class="logo">ST</div>
+        <div><b>言語治療工作平台</b><span>學前兒童口語評估量表（0–6 歲）</span></div>
+      </div>
+      <nav class="nav">
+        <div class="grp-label">工作台</div>
+        <a :class="{active:curPage==='children'}" @click="curPage='children'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          兒童檔案
+        </a>
+        <a :class="{active:curPage==='assess'}" @click="curPage='assess'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/></svg>
+          評估
+        </a>
+        <a :class="{active:curPage==='interv'}" @click="curPage='interv'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          干預
+        </a>
+        <div class="grp-label">系統</div>
+        <a :class="{active:curPage==='settings'}" @click="curPage='settings'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          設置
+        </a>
+      </nav>
+      <div class="me" v-if="curChild">
+        <div class="avatar">{{ (curChild.name||'·').slice(0,1) }}</div>
+        <div><b>{{ curChild.name }}</b><span>目前兒童・{{ ageLabel }}</span></div>
+      </div>
+      <div class="me" v-else>
+        <div class="avatar">—</div>
+        <div><b>未選擇兒童</b><span>請先於「兒童檔案」選擇</span></div>
+      </div>
+    </aside>
+
+    <el-container class="main-col">
+      <!-- ═══════ 頂欄 ═══════ -->
+      <el-header class="topbar no-print" height="auto">
+        <span class="crumb">首頁 / <b>{{ pageTitles[curPage] }}</b></span>
+        <span class="sp"></span>
+        <span v-if="curChild" class="note" style="margin:0">{{ curChild.name }}・{{ curChild.sex||'—' }}・{{ curChild.dob||'—' }}｜已存 {{ curChild.sessions?.length||0 }} 次課程<span v-if="curChild.savedAt">｜評估存檔：{{ curChild.savedAt }}</span><span v-else>｜此檔案尚未存過評估</span></span>
+      </el-header>
+
+      <el-main class="content">
+
+        <!-- ═══════ 1. 兒童檔案 ═══════ -->
+        <section v-show="curPage==='children'">
+          <el-card shadow="never" class="no-print">
+            <template #header><b>兒童檔案</b><span class="sub-hint">點擊「載入」選擇兒童；選擇後自動載入已存檔的評估</span></template>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
+              <el-button type="primary" @click="ncDlg=true">＋ 新增兒童</el-button>
+              <el-button type="primary" plain @click="saveAssessment" :disabled="!curChild">儲存目前評估到此檔案</el-button>
+              <el-button @click="loadChild" :disabled="!curChild">載入此兒童評估</el-button>
+              <el-popconfirm title="確定刪除此檔案及全部課程記錄？" @confirm="delChild">
+                <template #reference><el-button type="danger" plain :disabled="!curChild">刪除檔案</el-button></template>
+              </el-popconfirm>
+            </div>
+            <el-table :data="children" size="small" border highlight-current-row @row-click="c=>{curChildId=c.id}">
+              <el-table-column label="姓名" min-width="150">
+                <template #default="{row}"><b>{{ row.name }}</b><el-tag v-if="curChildId===row.id" size="small" effect="plain" style="margin-left:8px">目前</el-tag></template>
+              </el-table-column>
+              <el-table-column prop="sex" label="性別" width="70" align="center"></el-table-column>
+              <el-table-column prop="dob" label="出生日期" width="120"></el-table-column>
+              <el-table-column prop="org" label="機構" min-width="140"></el-table-column>
+              <el-table-column prop="updated_at" label="最近更新" width="180"></el-table-column>
+              <el-table-column label="" width="90" align="center">
+                <template #default="{row}"><el-button link type="primary" size="small" @click.stop="curChildId=row.id">載入</el-button></template>
+              </el-table-column>
+            </el-table>
+            <el-empty v-if="!children.length" description="尚無兒童檔案 — 按「＋ 新增兒童」建立第一份檔案" :image-size="80"></el-empty>
+          </el-card>
+        </section>
+
+        <!-- ═══════ 2. 評估 ═══════ -->
+        <section v-show="curPage==='assess'">
+          <el-tabs v-model="assessTab">
+            <el-tab-pane label="量表評估" name="scale">
 
     <!-- ═══════ 兒童資料（需先有兒童檔案）═══ -->
     <el-header class="metabar" height="auto" v-if="curChild">
@@ -43,27 +116,7 @@
       </div>
     </el-header>
 
-    <el-main style="max-width:1280px;margin:0 auto;width:100%;padding:26px 32px 90px">
-
-        <!-- ═══════ 兒童檔案（評估之前：先新增／選擇兒童）═══ -->
-        <el-card shadow="never" class="no-print">
-          <template #header><b>兒童檔案</b><span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">先新增或選擇兒童，再進行評估；選擇後自動載入已存檔的評估</span></template>
-          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-            <el-select v-model="curChildId" placeholder="選擇兒童檔案" style="width:230px" size="large" clearable>
-              <el-option v-for="c in children" :key="c.id" :label="childLabel(c)" :value="c.id"></el-option>
-            </el-select>
-            <el-button type="primary" @click="ncDlg=true">＋ 新增兒童</el-button>
-            <el-button type="primary" plain @click="saveAssessment" :disabled="!curChild">儲存目前評估到此檔案</el-button>
-            <el-button @click="loadChild" :disabled="!curChild">載入此兒童評估</el-button>
-            <el-popconfirm title="確定刪除此檔案及全部課程記錄？" @confirm="delChild">
-              <template #reference><el-button type="danger" plain :disabled="!curChild">刪除檔案</el-button></template>
-            </el-popconfirm>
-            <span v-if="curChild" class="note" style="margin-left:6px">
-              {{ curChild.name }}・{{ curChild.sex||'—' }}・{{ curChild.dob||'—' }}｜已存 {{ curChild.sessions?.length||0 }} 次課程<span v-if="curChild.savedAt">｜評估存檔：{{ curChild.savedAt }}</span><span v-else>｜此檔案尚未存過評估</span>
-            </span>
-          </div>
-        </el-card>
-        <el-empty v-if="!curChild" description="請先新增或選擇兒童檔案，才可開始評估記錄" :image-size="90"></el-empty>
+    <el-empty v-if="!curChild" description="請先於「兒童檔案」新增或選擇兒童檔案，才可開始評估記錄" :image-size="90"></el-empty>
 
         <template v-if="curChild">
         <!-- ═══════ 臨床觀察 ═══════ -->
@@ -174,6 +227,32 @@
           </el-card>
         </template>
 
+            </el-tab-pane>
+
+            <el-tab-pane label="評估報告" name="report">
+              <!-- ═══════ 家長報告 ═══════ -->
+              <el-card shadow="never" class="no-print" style="margin-bottom:14px">
+                <template #header><b>家長報告</b><span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">先完成評估記錄及頂欄資料，生成後報告內容可直接修改</span></template>
+                <el-space wrap>
+                  <el-button type="primary" @click="genReport">生成家長報告</el-button>
+                  <el-button type="success" plain @click="downloadReport" :disabled="!repHtml">下載報告 PDF</el-button>
+                  <el-button plain @click="printReport" :disabled="!repHtml">預覽 / 列印 PDF</el-button>
+                </el-space>
+                <el-alert v-if="repWarn" :title="repWarn" type="warning" :closable="false" style="margin-top:12px"></el-alert>
+              </el-card>
+              <el-card v-if="repHtml" shadow="never" style="padding:0">
+                <div id="repDoc" v-html="repHtml"></div>
+              </el-card>
+              <el-empty v-else description="尚未生成報告 — 完成評估記錄後按「生成家長報告」"></el-empty>
+            </el-tab-pane>
+          </el-tabs>
+        </section>
+
+        <!-- ═══════ 3. 干預 ═══════ -->
+        <section v-show="curPage==='interv'">
+          <el-tabs v-model="intervTab">
+            <el-tab-pane label="干預方案・課程記錄" name="plan">
+
 <!-- ═══════ 干預方案・課程記錄 ═══════ -->
 <el-card shadow="never">
   <template #header><b>干預方案・課程記錄</b>
@@ -283,7 +362,9 @@
   </el-table>
   <el-empty v-else description="尚未選擇兒童" :image-size="60"></el-empty>
 </el-card>
+            </el-tab-pane>
 
+            <el-tab-pane label="干預種子庫" name="seeds">
 <!-- ═══════ 干預種子庫 ═══════ -->
 <el-card shadow="never">
   <template #header><b>干預種子庫</b>
@@ -314,6 +395,27 @@
     </el-table-column>
   </el-table>
 </el-card>
+            </el-tab-pane>
+          </el-tabs>
+        </section>
+
+        <!-- ═══════ 4. 設置 ═══════ -->
+        <section v-show="curPage==='settings'">
+          <el-card shadow="never">
+            <template #header><b>AI 設定</b><span class="sub-hint">干預方案 AI 生成與對話修改所用的 LLM 連線</span></template>
+            <p class="note" style="margin-top:0">API 金鑰儲存於後端伺服器，不存於瀏覽器；未設定時仍可用「依種子庫生成」方案。</p>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+              <el-button type="primary" @click="aiDlg=true">開啟 AI 設定</el-button>
+              <span class="note" style="margin:0" v-if="aiCfg.model">目前：{{ aiCfg.model }}｜協議：{{ aiCfg.type }}</span>
+              <span class="note" style="margin:0" v-else>尚未設定模型</span>
+            </div>
+          </el-card>
+          <el-card shadow="never">
+            <template #header><b>關於本平台</b></template>
+            <p class="note" style="margin-top:0">學前兒童口語評估量表（Preschool Language Assessment Scale，0–6 歲）｜言語治療評估與干預工作平台。</p>
+            <p class="note" style="margin:0">本量表供註冊言語治療師作臨床評估之用；評估結果須結合臨床觀察及專業判斷綜合解讀。</p>
+          </el-card>
+        </section>
 
 <!-- 新增兒童 -->
 <el-dialog v-model="ncDlg" title="新增兒童檔案" width="420px">
@@ -385,27 +487,12 @@
 </el-dialog>
 
 
-        <!-- ═══════ 家長報告 ═══════ -->
-          <el-card shadow="never" class="no-print" style="margin-bottom:14px">
-            <template #header><b>家長報告</b><span style="color:var(--el-text-color-secondary);font-size:13px;margin-left:12px">先完成評估記錄及頂欄資料，生成後報告內容可直接修改</span></template>
-            <el-space wrap>
-              <el-button type="primary" @click="genReport">生成家長報告</el-button>
-              <el-button type="success" plain @click="downloadReport" :disabled="!repHtml">下載報告 PDF</el-button>
-              <el-button plain @click="printReport" :disabled="!repHtml">預覽 / 列印 PDF</el-button>
-            </el-space>
-            <el-alert v-if="repWarn" :title="repWarn" type="warning" :closable="false" style="margin-top:12px"></el-alert>
-          </el-card>
-          <el-card v-if="repHtml" shadow="never" style="padding:0">
-            <div id="repDoc" v-html="repHtml"></div>
-          </el-card>
-          <el-empty v-else description="尚未生成報告 — 完成評估記錄後按「生成家長報告」"></el-empty>
+                <el-backtop :right="24" :bottom="24"></el-backtop>
+        <div class="footer no-print">本量表供註冊言語治療師作臨床評估之用；評估結果須結合臨床觀察及專業判斷綜合解讀。</div>
 
-
-    </el-main>
-    <el-backtop :right="24" :bottom="24"></el-backtop>
+      </el-main>
+    </el-container>
   </el-container>
-  <div class="footer no-print">本量表供註冊言語治療師作臨床評估之用；評估結果須結合臨床觀察及專業判斷綜合解讀。</div>
-
 </template>
 
 <script setup>
@@ -423,6 +510,12 @@ const oralRows = reactive(oralRowsD);
 const dailyObs = reactive(dailyObsD);
 const foodObs  = reactive(foodObsD);
 const stim     = reactive(stimD);
+
+    // ══ 頁面結構：左側菜單 4 大區 ══
+    const curPage    = ref('children');
+    const assessTab  = ref('scale');
+    const intervTab  = ref('plan');
+    const pageTitles = {children:'兒童檔案', assess:'評估', interv:'干預', settings:'設置'};
 
     const f = reactive({org:'',name:'',dob:'',adate:new Date().toISOString().slice(0,10),sex:'',obs1:'',obs2:'',obs3:'',
       dx:'',sev:'',therapist:'',license:'',signDate:new Date().toISOString().slice(0,10),signature:'',oralNote:'',foodNote:''});
@@ -538,7 +631,6 @@ const stim     = reactive(stimD);
       }catch(e){ ElementPlus.ElMessage.error('儲存失敗：'+e.message); return false; }
     }
     watch(aiCfg, ()=>{ api.putAi(JSON.parse(JSON.stringify(aiCfg))).catch(()=>{}); }, {deep:true});
-    function childLabel(c){ return c.name + (counts[c.id]!=null ? '（'+counts[c.id]+' 次課程）' : ''); }
     const nextSessionNo = computed(()=>(curChild.value?.sessions?.length||0)+1);
     const ncDlg = ref(false);
     const nc = reactive({name:'',sex:'',dob:''});
