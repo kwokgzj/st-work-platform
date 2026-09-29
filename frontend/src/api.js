@@ -72,7 +72,7 @@ async function directLLM(cfg, prompt, maxTokens){
   let url, headers, body;
   if(isResp){
     url = base.endsWith('/responses') ? base : base + '/responses';
-    headers = {Authorization:'Bearer '+key};
+    headers = {'Content-Type':'application/json', Authorization:'Bearer '+key};
     body = {model:cfg.model, input:prompt, max_output_tokens:maxTokens||16384};
   }else if(isAnth){
     url = _normAnth(base);
@@ -82,7 +82,7 @@ async function directLLM(cfg, prompt, maxTokens){
     body = {model:cfg.model, max_tokens:maxTokens||16384, messages:[{role:'user',content:prompt}]};
   }else{
     url = _normBase(base);
-    headers = {Authorization:'Bearer '+key};
+    headers = {'Content-Type':'application/json', Authorization:'Bearer '+key};
     body = {model:cfg.model, messages:[{role:'user',content:prompt}], temperature:0.4, max_tokens:maxTokens||16384};
   }
   if(cfg.thinking==='off'||cfg.thinking==='on'){
