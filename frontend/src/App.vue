@@ -629,7 +629,8 @@
 // 學前兒童口語評估量表 — 自單檔 HTML 原樣遷移（Vite + Vue3 SFC），UI/交互保持不變
 import { reactive, ref, computed, watch, nextTick } from 'vue';
 import * as ElementPlus from 'element-plus';   // 業務邏輯大量使用 ElementPlus.ElMessage / ElMessageBox
-import html2pdf from 'html2pdf.js';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { PAGES, oralRows as oralRowsD, dailyObs as dailyObsD, foodObs as foodObsD, stim as stimD,
          dxs, TYP, DOMS, HOME_BASE, DEFAULT_SEEDS } from './data.js';
 import { api } from './api.js';
@@ -1216,17 +1217,21 @@ const stim     = reactive(stimD);
       holder.querySelectorAll('.rev').forEach(e=>{ if(!e.textContent.trim()) e.textContent='—'; });
       document.body.appendChild(holder);
       try{
-        await html2pdf().set({
-          margin:[10,9],
-          filename:`評估報告_${f.name.trim()||'兒童'}_${f.adate||''}.pdf`,
-          image:{type:'jpeg',quality:0.96},
-          html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
-          jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-          pagebreak:{mode:['css','legacy']}
-        }).from(holder).save();
+        const canvas = await html2canvas(holder, {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false});
+        const pdf = new jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
+        const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+        const img = canvas.toDataURL('image/jpeg', 0.95);
+        const imgH = canvas.height * pw / canvas.width;
+        for(let pos=0, page=0; pos < imgH-1; pos+=ph, page++){
+          if(page>0) pdf.addPage();
+          pdf.addImage(img, 'JPEG', 0, -pos, pw, imgH);
+        }
+        pdf.save(`評估報告_${f.name.trim()||'兒童'}_${f.adate||''}.pdf`);
         ElementPlus.ElMessage.success('PDF 已下載');
       }catch(err){
-        ElementPlus.ElMessage.error('PDF 生成失敗：'+err.message);
+        console.error('PDF 生成失敗：', err);
+        ElementPlus.ElMessage.error('PDF 生成失敗：'+(err&&err.message||err)+' — 已改用列印視窗，可在預覽中另存 PDF');
+        printReport();   // 兜底：列印視窗可「另存為 PDF」，保證一定拿得到報告
       }
       holder.remove();
     }
