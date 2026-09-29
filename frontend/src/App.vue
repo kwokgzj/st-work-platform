@@ -306,7 +306,6 @@
     <el-date-picker v-model="planDate" type="date" value-format="YYYY-MM-DD" style="width:150px"></el-date-picker>
     <el-button type="primary" @click="genPlan(true)" :loading="genLoading" :disabled="!curChild">{{ genLoading ? 'AI 生成中… ' + genSecs + ' 秒' : 'AI 生成方案' }}</el-button>
     <el-button @click="genPlan(false)" :disabled="!curChild">依種子庫生成</el-button>
-    <el-button link type="primary" @click="aiDlg=true">AI 設定</el-button>
     <el-button type="success" @click="saveSession" :disabled="!plan">儲存為課程記錄</el-button>
   </div>
   <el-alert v-if="genLoading" title="AI 正在根據評估弱項與種子庫撰寫方案，長文生成可能需要 1–2 分鐘，請勿關閉頁面" type="info" :closable="false" style="margin-bottom:10px"/>
@@ -452,6 +451,7 @@
             <p class="note" style="margin-top:0">API 金鑰儲存於後端伺服器，不存於瀏覽器；未設定時仍可用「依種子庫生成」方案。</p>
             <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
               <el-button type="primary" @click="aiDlg=true">開啟 AI 設定</el-button>
+              <span class="note" style="margin:0">干預方案 AI 生成與對話修改均使用此連線</span>
               <span class="note" style="margin:0" v-if="aiCfg.model">目前：{{ aiCfg.model }}｜協議：{{ aiCfg.type }}</span>
               <span class="note" style="margin:0" v-else>尚未設定模型</span>
             </div>
@@ -944,7 +944,7 @@ const stim     = reactive(stimD);
         try{ p=await aiGenPlan(band); src='AI'; }
         catch(e){ planErr.value='AI 生成失敗，已自動改用種子庫規則生成。原因：'+e.message; }
       } else if(useAI){
-        planErr.value='尚未設定 AI（按「AI 設定」填入 API Key），已改用種子庫生成。';
+        planErr.value='尚未設定 AI（到「設置」頁開啟 AI 設定填入 API Key），已改用種子庫生成。';
       }
       if(!p) p=rulePlan(band);
       const nGames=p.goals.reduce((n,g)=>n+g.games.length,0);
@@ -999,7 +999,7 @@ const stim     = reactive(stimD);
               if(!used.has(s.name)){ (v.goals[0]?.games||v.goals[0].games).push({name:s.name,domain:s.domain,target:s.goal,desc:s.desc,checked:true}); added++; } }
             plan.value.chat.push({role:'assistant', text:added?`已從種子庫加入 ${added} 個遊戲到目標 1。`:'種子庫遊戲已全部使用。'});
           } else {
-            plan.value.chat.push({role:'assistant', text:'尚未設定 AI 金鑰，目前只支援「加入遊戲」類簡單指令；完整對話修改請於 AI 設定填入金鑰。'});
+            plan.value.chat.push({role:'assistant', text:'尚未設定 AI 金鑰，目前只支援「加入遊戲」類簡單指令；完整對話修改請到「設置」頁填入金鑰。'});
           }
         }
       }catch(e){
