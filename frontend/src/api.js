@@ -119,7 +119,10 @@ async function directLLM(cfg, prompt, maxTokens){
   }
   if(!text){
     const finish=(data.choices&&data.choices[0]&&data.choices[0].finish_reason)||data.stop_reason||'';
-    throw new Error('LLM 回應為空'+(finish?'（finish_reason='+finish+'）':'')+' — 常見原因：推理模型耗盡輸出上限（max_tokens）、協議不匹配或內容被過濾；可重試或在 AI 設定換模型。原始回應：'+txt.slice(0,800));
+    const reasoning=((data.choices||[{}])[0].message||{}).reasoning_content||((data.choices||[{}])[0].message||{}).reasoning||'';
+    if(finish==='length' && reasoning)
+      throw new Error('模型把輸出全部用於思考（finish_reason=length，思考了 '+(data.usage&&data.usage.completion_tokens||'?')+' tokens 仍未寫正文）— 請在「AI 設定」將思考檔位設為「關閉思考」，或提高輸出上限。思考開頭：'+reasoning.slice(0,300));
+    throw new Error('LLM 回應為空'+(finish?'（finish_reason='+finish+'）':'')+' — 常見原因：推理模型耗盡輸出上限、協議不匹配或內容被過濾；可重試或在 AI 設定換模型/關閉思考。原始回應：'+txt.slice(0,800));
   }
   return text;
 }

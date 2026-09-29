@@ -742,7 +742,7 @@ const stim     = reactive(stimD);
     const children  = reactive([]);          // 輕量列表（下拉選單）
     const counts    = reactive({});          // id → 課程數（載入完整檔案時更新；輕量列表不含 sessions）
     const seeds     = reactive(DEFAULT_SEEDS.map(s=>({...s})));
-    const aiCfg     = reactive({type:'openai', base:'https://api.openai.com/v1/chat/completions', key:'', model:'gpt-4o-mini', thinking:''});
+    const aiCfg     = reactive({type:'openai', base:'https://api.openai.com/v1/chat/completions', key:'', model:'gpt-4o-mini', thinking:'off'});
 
     function saveSeeds(){
       api.putSeeds(JSON.parse(JSON.stringify(seeds)))
@@ -987,7 +987,7 @@ const stim     = reactive(stimD);
       await api.putAi(JSON.parse(JSON.stringify(aiCfg))).catch(()=>{});
       aiTesting.value=true; aiTest.value='';
       try{
-        await callLLM('回應OK', 8);
+        await callLLM('回應OK', 512);   // 思考模型需餘量；測試連線非測輸出上限
         aiTest.value='✅ 連線成功（'+(isAnthropicCfg()?'Anthropic':'OpenAI 相容')+'格式），AI 生成可用';
       }catch(e){
         aiTest.value='❌ '+e.message;
@@ -1268,6 +1268,7 @@ const stim     = reactive(stimD);
         if(!ss || !ss.length){ ss=DEFAULT_SEEDS.map(s=>({...s})); api.putSeeds(ss.map(s=>({...s}))).catch(()=>{}); }
         seeds.splice(0, seeds.length, ...ss);
         const ai=await api.getAi(); if(ai) Object.assign(aiCfg, ai);
+        if(!aiCfg.thinking) aiCfg.thinking='off';   // 舊配置默認關閉思考，避免推理耗盡輸出
         await refreshChildren();
       }catch(e){ console.warn('後端未就緒：', e.message); }
     })();
