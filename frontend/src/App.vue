@@ -91,12 +91,12 @@
               </el-select>
               <template v-if="assessView">
                 <el-button :disabled="!curAssessId" @click="startEdit">編輯</el-button>
-                <el-button type="primary" @click="startNew">重新評估</el-button>
+                <el-button type="primary" @click="startNew">{{ assessList.length ? '重新評估' : '立即評估' }}</el-button>
               </template>
               <el-tag v-else :type="assessMode==='new'?'success':'warning'" effect="dark">
                 {{ assessMode==='new'?'撰寫新評估':'編輯現有評估' }}
               </el-tag>
-              <span v-if="assessView && !assessList.length" class="note" style="margin:0">尚無評估記錄 — 按「重新評估」開始第一次評估</span>
+              <span v-if="assessView && !assessList.length" class="note" style="margin:0">該兒童尚無評估記錄，量表為空白唯讀</span>
             </template>
             <span v-else class="note" style="margin:0">請先選擇兒童檔案（或到「兒童檔案」頁新增）</span>
           </div>
@@ -718,8 +718,7 @@ const stim     = reactive(stimD);
       children.unshift(c); counts[c.id]=0;
       curChildId.value=c.id; f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org;
       nc.name=''; nc.sex=''; nc.dob=''; ncDlg.value=false;
-      curPage.value='assess';   // 建檔後直接到評估頁
-      ElementPlus.ElMessage.success('檔案已建立，按「重新評估」開始第一次評估');
+      ElementPlus.ElMessage.success('檔案已建立並選中；可到「評估」頁按「立即評估」開始第一次評估');
     }
     function applyChildToForm(c){
       f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org;
