@@ -52,8 +52,64 @@ function localApi(){
     putSeeds: arr => { lsWrite(SEEDS, arr); return clone({count:(arr||[]).length}); },
     getAi: () => clone(lsRead(AI, null)),
     putAi: cfg => { lsWrite(AI, cfg); return clone(null); },
-    aiChat: () => Promise.reject(new Error('單檔模式無 AI 服務，請使用「依種子庫生成」')),
+    aiChat: (prompt, max_tokens) => {
+      const cfg = lsRead(AI, null) || {};
+      if(!cfg.base || !cfg.key) return Promise.reject(new Error('尚未設定 AI，請先到「設置」頁填寫並儲存'));
+      return directLLM(cfg, prompt, max_tokens).then(t=>({text:t}));
+    },
   };
+}
+
+// ── 單檔模式：瀏覽器直連 LLM（移植自後端 ai.py 三協議；金鑰存在使用者本機瀏覽器）──
+const _normBase = u => { let s=(u||'').trim().replace(/\/+$/,''); if(s && !s.endsWith('/chat/completions')) s+='/chat/completions'; return s; };
+const _normAnth = u => { let s=(u||'').trim().replace(/\/+$/,''); if(!s) return s; if(s.endsWith('/messages')) return s; if(s.endsWith('/v1')) return s+'/messages'; return s+'/v1/messages'; };
+const _MODEL_EXTRA = ' —— 模型名稱可能錯誤或帳號未開通該模型，請更換模型名稱（如 glm-4-flash、deepseek-chat、gpt-4o-mini）';
+
+async function directLLM(cfg, prompt, maxTokens){
+  const key=(cfg.key||'').trim(), base=(cfg.base||'').trim().replace(/\/+$/,'');
+  const isAnth = cfg.type==='anthropic' || /anthropic\.com/.test(base);
+  const isResp = cfg.type==='responses' || base.endsWith('/responses');
+  let url, headers, body;
+  if(isResp){
+    url = base.endsWith('/responses') ? base : base + '/responses';
+    headers = {Authorization:'Bearer '+key};
+    body = {model:cfg.model, input:prompt, max_output_tokens:maxTokens||4000};
+  }else if(isAnth){
+    url = _normAnth(base);
+    headers = {'content-type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    if(key.startsWith('sk-ant-oat')) headers['authorization']='Bearer '+key;   // Claude 訂閱 OAuth token
+    else headers['x-api-key']=key;
+    body = {model:cfg.model, max_tokens:maxTokens||4000, messages:[{role:'user',content:prompt}]};
+  }else{
+    url = _normBase(base);
+    headers = {Authorization:'Bearer '+key};
+    body = {model:cfg.model, messages:[{role:'user',content:prompt}], temperature:0.4};
+  }
+  const ctl = new AbortController();
+  const timer = setTimeout(()=>ctl.abort(), 180000);
+  let r;
+  try{
+    r = await fetch(url, {method:'POST', headers, body:JSON.stringify(body), signal:ctl.signal});
+  }catch(e){
+    clearTimeout(timer);
+    if(e.name==='AbortError') throw new Error('請求逾時（超過 3 分鐘未回應），請重試或更換較快的模型');
+    throw new Error('無法連上 LLM 服務 — 網路問題、CORS 限制或服務不可用。部分服務商不允許瀏覽器直連，可更換服務商/接入點，或改用伺服器版');
+  }
+  clearTimeout(timer);
+  const txt = await r.text();
+  if(!r.ok){
+    let extra = '';
+    if(r.status===403 || /model_access_denied|invalid model|model.?not.?exist|does not exist/i.test(txt))
+      extra = isResp ? ' —— 若你是 Codex/Responses 協議接入，請確認 AI 設定的協議已選「OpenAI Responses」' : _MODEL_EXTRA;
+    throw new Error('HTTP '+r.status+'：'+txt.slice(0,180)+extra);
+  }
+  let data; try{ data=JSON.parse(txt); }catch(e){ throw new Error('回應非 JSON：'+txt.slice(0,120)); }
+  if(isResp){
+    const out=(data.output||[]).map(o=>(o.content||[]).map(c=>c.text||'').join('')).join('');
+    return out || data.output_text || '';
+  }
+  if(isAnth) return (data.content||[]).map(c=>c.text||'').join('');
+  return ((data.choices||[{}])[0].message||{}).content || '';
 }
 
 export const api = STANDALONE ? localApi() : remoteApi;

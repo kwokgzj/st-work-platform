@@ -581,7 +581,9 @@
 <!-- AI 設定 -->
 <el-dialog v-model="aiDlg" title="AI 設定" width="520px">
   <el-alert type="info" :closable="false" style="margin-bottom:14px;line-height:1.8"
-    title="填入後端代連的 LLM API（OpenAI 相容 / Anthropic / Responses）。金鑰儲存於後端伺服器，不再存於瀏覽器；未填寫時仍可用「依種子庫生成」。"></el-alert>
+    :title="api.standalone
+      ? '填入 LLM API（OpenAI 相容 / Anthropic / Responses），金鑰僅存於本機瀏覽器；瀏覽器直連需服務商允許 CORS（OpenAI / Claude 官方、智譜等主流服務均可）。未填寫時仍可用「依種子庫生成」。'
+      : '填入後端代連的 LLM API（OpenAI 相容 / Anthropic / Responses）。金鑰儲存於後端伺服器，不再存於瀏覽器；未填寫時仍可用「依種子庫生成」。'"></el-alert>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
     <span class="note">快速填入：</span>
     <el-button v-for="p in AI_PRESETS" :key="p.n" size="small" @click="applyPreset(p)">{{ p.n }}</el-button>
