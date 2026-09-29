@@ -7,3 +7,4 @@ data/*
 !data/.gitkeep
 .multica/
 .pi/
+frontend/dist-single/

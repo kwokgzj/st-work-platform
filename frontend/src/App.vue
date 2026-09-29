@@ -1232,6 +1232,7 @@ const stim     = reactive(stimD);
 
     // ── 存量 localStorage 一次性導入（設計 §6，防舊檔案因切庫丟失）──
     async function importLegacy(){
+      if(api.standalone) return;   // 單檔模式：本地鍵同名，舊數據本就生效
       const read=k=>{ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } };
       const kids=read('plas_children')||[], oldSeeds=read('plas_seeds')||[], oldAi=read('plas_ai');
       if(!kids.length && !oldSeeds.length) return;
