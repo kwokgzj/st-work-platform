@@ -54,6 +54,8 @@ def list_records():
             "sex": d.get("sex", ""),
             "dob": d.get("dob", ""),
             "org": d.get("org", ""),
+            "guardian": d.get("guardian", ""),
+            "phone": d.get("phone", ""),
             "updated_at": r["updated_at"],
         })
     return out

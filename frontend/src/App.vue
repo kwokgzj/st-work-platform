@@ -48,27 +48,79 @@
 
         <!-- ═══════ 1. 兒童檔案 ═══════ -->
         <section v-show="curPage==='children'">
-          <el-card shadow="never" class="no-print">
-            <template #header><b>兒童檔案</b><span class="sub-hint">點擊「載入」選擇兒童；選擇後自動載入已存檔的評估</span></template>
+
+          <!-- 列表 -->
+          <el-card v-if="!detailOpen" shadow="never" class="no-print">
+            <template #header><b>兒童檔案</b><span class="sub-hint">點擊行查看/編輯詳情；「載入」選為當前兒童（自動載入已存檔評估）</span></template>
             <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
               <el-button type="primary" @click="ncDlg=true">＋ 新增兒童</el-button>
               <el-popconfirm title="確定刪除此檔案及全部課程記錄？" @confirm="delChild">
-                <template #reference><el-button type="danger" plain :disabled="!curChild">刪除檔案</el-button></template>
+                <template #reference><el-button type="danger" plain :disabled="!curChild">刪除當前檔案</el-button></template>
               </el-popconfirm>
             </div>
-            <el-table :data="children" size="small" border highlight-current-row @row-click="c=>{curChildId=c.id}">
-              <el-table-column label="姓名" min-width="150">
+            <el-table :data="children" size="small" border highlight-current-row @row-click="openDetail">
+              <el-table-column label="姓名" min-width="140">
                 <template #default="{row}"><b>{{ row.name }}</b><el-tag v-if="curChildId===row.id" size="small" effect="plain" style="margin-left:8px">目前</el-tag></template>
               </el-table-column>
-              <el-table-column prop="sex" label="性別" width="70" align="center"></el-table-column>
-              <el-table-column prop="dob" label="出生日期" width="120"></el-table-column>
-              <el-table-column prop="org" label="機構" min-width="140"></el-table-column>
-              <el-table-column prop="updated_at" label="最近更新" width="180"></el-table-column>
-              <el-table-column label="" width="90" align="center">
-                <template #default="{row}"><el-button link type="primary" size="small" @click.stop="curChildId=row.id">載入</el-button></template>
+              <el-table-column prop="sex" label="性別" width="60" align="center"></el-table-column>
+              <el-table-column prop="dob" label="出生日期" width="110"></el-table-column>
+              <el-table-column label="監護人 / 電話" min-width="150">
+                <template #default="{row}">{{ [row.guardian,row.phone].filter(Boolean).join(' · ') || '—' }}</template>
+              </el-table-column>
+              <el-table-column prop="org" label="機構" min-width="120"></el-table-column>
+              <el-table-column prop="updated_at" label="最近更新" width="170"></el-table-column>
+              <el-table-column label="" width="130" align="center">
+                <template #default="{row}"><el-button link type="primary" size="small" @click.stop="openDetail(row)">詳情</el-button><el-button link type="primary" size="small" @click.stop="curChildId=row.id">載入</el-button></template>
               </el-table-column>
             </el-table>
             <el-empty v-if="!children.length" description="尚無兒童檔案 — 按「＋ 新增兒童」建立第一份檔案" :image-size="80"></el-empty>
+          </el-card>
+
+          <!-- 詳情 -->
+          <el-card v-else shadow="never">
+            <template #header>
+              <div style="display:flex;align-items:center;gap:12px">
+                <el-button size="small" @click="detailOpen=false">← 返回列表</el-button>
+                <b style="font-size:16px">{{ pf.name || '兒童詳情' }}</b>
+                <el-tag v-if="curChild" size="small" effect="plain">評估記錄 {{ assessList.length }} 條</el-tag>
+                <el-tag v-if="curChild" size="small" effect="plain" type="info">課程 {{ curChild.sessions?.length||0 }} 次</el-tag>
+              </div>
+            </template>
+            <el-form label-width="100px" style="max-width:720px" v-if="curChild">
+              <el-divider content-position="left">基本資料</el-divider>
+              <el-row :gutter="16">
+                <el-col :span="12"><el-form-item label="姓名"><el-input v-model="pf.name"></el-input></el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="性別">
+                  <el-radio-group v-model="pf.sex"><el-radio-button value="男">男</el-radio-button><el-radio-button value="女">女</el-radio-button></el-radio-group>
+                </el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="出生日期"><el-date-picker v-model="pf.dob" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="機構"><el-input v-model="pf.org"></el-input></el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="就讀學校/班級"><el-input v-model="pf.school"></el-input></el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="家庭語言"><el-input v-model="pf.lang" placeholder="如：廣東話／普通話／雙語"></el-input></el-form-item></el-col>
+              </el-row>
+              <el-divider content-position="left">監護人聯絡</el-divider>
+              <el-row :gutter="16">
+                <el-col :span="12"><el-form-item label="監護人姓名"><el-input v-model="pf.guardian"></el-input></el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="關係">
+                  <el-select v-model="pf.relation" style="width:100%" placeholder="選擇或輸入" filterable allow-create default-first-option>
+                    <el-option v-for="r in ['父親','母親','祖父母','外傭','其他']" :key="r" :label="r" :value="r"></el-option>
+                  </el-select>
+                </el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="聯絡電話"><el-input v-model="pf.phone"></el-input></el-form-item></el-col>
+                <el-col :span="12"><el-form-item label="電郵"><el-input v-model="pf.email"></el-input></el-form-item></el-col>
+              </el-row>
+              <el-divider content-position="left">其他</el-divider>
+              <el-form-item label="轉介來源">
+                <el-select v-model="pf.referral" style="max-width:300px" placeholder="選擇或輸入" filterable allow-create default-first-option>
+                  <el-option v-for="r in ['自行報名','學校轉介','醫生轉介','機構轉介','其他']" :key="r" :label="r" :value="r"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="備註"><el-input v-model="pf.notes" type="textarea" :rows="3" placeholder="醫療史、相關診斷、注意事項…"></el-input></el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="saveProfile">儲存檔案</el-button>
+              </el-form-item>
+            </el-form>
+            <el-empty v-else description="檔案載入中…"></el-empty>
           </el-card>
         </section>
 
@@ -464,13 +516,37 @@
         </section>
 
 <!-- 新增兒童 -->
-<el-dialog v-model="ncDlg" title="新增兒童檔案" width="420px">
-  <el-form label-width="80px">
-    <el-form-item label="姓名"><el-input v-model="nc.name"></el-input></el-form-item>
-    <el-form-item label="性別">
-      <el-radio-group v-model="nc.sex"><el-radio-button value="男">男</el-radio-button><el-radio-button value="女">女</el-radio-button></el-radio-group>
+<el-dialog v-model="ncDlg" title="新增兒童檔案" width="600px">
+  <el-form label-width="100px">
+    <el-divider content-position="left" style="margin:0 0 14px">基本資料</el-divider>
+    <el-row :gutter="16">
+      <el-col :span="12"><el-form-item label="姓名" required><el-input v-model="nc.name"></el-input></el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="性別">
+        <el-radio-group v-model="nc.sex"><el-radio-button value="男">男</el-radio-button><el-radio-button value="女">女</el-radio-button></el-radio-group>
+      </el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="出生日期"><el-date-picker v-model="nc.dob" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="機構"><el-input v-model="nc.org"></el-input></el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="就讀學校/班級"><el-input v-model="nc.school"></el-input></el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="家庭語言"><el-input v-model="nc.lang" placeholder="如：廣東話／普通話／雙語"></el-input></el-form-item></el-col>
+    </el-row>
+    <el-divider content-position="left" style="margin:0 0 14px">監護人聯絡</el-divider>
+    <el-row :gutter="16">
+      <el-col :span="12"><el-form-item label="監護人姓名"><el-input v-model="nc.guardian"></el-input></el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="關係">
+        <el-select v-model="nc.relation" style="width:100%" placeholder="選擇或輸入" filterable allow-create default-first-option>
+          <el-option v-for="r in ['父親','母親','祖父母','外傭','其他']" :key="r" :label="r" :value="r"></el-option>
+        </el-select>
+      </el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="聯絡電話"><el-input v-model="nc.phone"></el-input></el-form-item></el-col>
+      <el-col :span="12"><el-form-item label="電郵"><el-input v-model="nc.email"></el-input></el-form-item></el-col>
+    </el-row>
+    <el-divider content-position="left" style="margin:0 0 14px">其他</el-divider>
+    <el-form-item label="轉介來源">
+      <el-select v-model="nc.referral" style="max-width:300px" placeholder="選擇或輸入" filterable allow-create default-first-option>
+        <el-option v-for="r in ['自行報名','學校轉介','醫生轉介','機構轉介','其他']" :key="r" :label="r" :value="r"></el-option>
+      </el-select>
     </el-form-item>
-    <el-form-item label="出生日期"><el-date-picker v-model="nc.dob" type="date" value-format="YYYY-MM-DD" style="width:100%"></el-date-picker></el-form-item>
+    <el-form-item label="備註"><el-input v-model="nc.notes" type="textarea" :rows="2" placeholder="醫療史、相關診斷、注意事項…"></el-input></el-form-item>
   </el-form>
   <template #footer>
     <el-button @click="ncDlg=false">取消</el-button>
@@ -673,7 +749,7 @@ const stim     = reactive(stimD);
     watch(curChildId, async id=>{
       if(!id){ curChild.value=null; curAssessId.value=null; intervAssessId.value=null; assessMode.value='view'; return; }
       const c=await api.getChild(id).catch(e=>{ ElementPlus.ElMessage.error('載入檔案失敗：'+e.message); return null; });
-      if(curChildId.value===id){ curChild.value=c; if(c){ counts[c.id]=(c.sessions?.length||0); normalizeAssessments(c); applyChildToForm(c); viewAssess(null); intervAssessId.value=curAssessId.value; } }
+      if(curChildId.value===id){ curChild.value=c; if(c){ counts[c.id]=(c.sessions?.length||0); normalizeAssessments(c); applyChildToForm(c); viewAssess(null); intervAssessId.value=curAssessId.value; if(detailOpen.value) fillProfileForm(c); } }
     });
     async function saveCurChild(){           // 整份替換寫回後端（PUT）
       const c=curChild.value; if(!c) return false;
@@ -684,9 +760,29 @@ const stim     = reactive(stimD);
       }catch(e){ ElementPlus.ElMessage.error('儲存失敗：'+e.message); return false; }
     }
     watch(aiCfg, ()=>{ api.putAi(JSON.parse(JSON.stringify(aiCfg))).catch(()=>{}); }, {deep:true});
+    // ── 兒童詳情頁（檔案頁點行進入，可編輯儲存）──
+    const detailOpen = ref(false);
+    const pf = reactive({name:'',sex:'',dob:'',org:'',guardian:'',relation:'',phone:'',email:'',school:'',lang:'',referral:'',notes:''});
+    function fillProfileForm(c){
+      Object.assign(pf,{name:c.name||'',sex:c.sex||'',dob:c.dob||'',org:c.org||'',guardian:c.guardian||'',relation:c.relation||'',
+        phone:c.phone||'',email:c.email||'',school:c.school||'',lang:c.lang||'',referral:c.referral||'',notes:c.notes||''});
+    }
+    function openDetail(c){
+      if(curChildId.value!==c.id) curChildId.value=c.id;   // 觸發載入；watch 載入完後填表
+      else if(curChild.value) fillProfileForm(curChild.value);
+      detailOpen.value=true;
+    }
+    async function saveProfile(){
+      const c=curChild.value; if(!c) return;
+      Object.assign(c,{name:pf.name.trim()||c.name, sex:pf.sex, dob:pf.dob, org:pf.org, guardian:pf.guardian, relation:pf.relation,
+        phone:pf.phone, email:pf.email, school:pf.school, lang:pf.lang, referral:pf.referral, notes:pf.notes});
+      f.name=c.name; f.sex=c.sex; f.dob=c.dob; f.org=c.org;   // 同步評估表單兒童身份欄
+      if(await saveCurChild()) ElementPlus.ElMessage.success('檔案已更新');
+    }
+
     const nextSessionNo = computed(()=>(curChild.value?.sessions?.length||0)+1);
     const ncDlg = ref(false);
-    const nc = reactive({name:'',sex:'',dob:''});
+    const nc = reactive({name:'',sex:'',dob:'',org:'',guardian:'',relation:'',phone:'',email:'',school:'',lang:'',referral:'',notes:''});
     const seedDlg = ref(false);
     const seedForm = reactive({id:null,name:'',domain:'rec',amin:0,amax:6,goal:'',desc:''});
     const aiDlg = ref(false);
@@ -713,11 +809,13 @@ const stim     = reactive(stimD);
     }
     async function addChild(){
       if(!nc.name.trim()){ ElementPlus.ElMessage.warning('請填寫姓名'); return; }
-      const c={id:'c'+Date.now(), name:nc.name.trim(), sex:nc.sex, dob:nc.dob, org:f.org, states:{}, sessions:[], createdAt:new Date().toISOString().slice(0,10)};
+      const c={id:'c'+Date.now(), name:nc.name.trim(), sex:nc.sex, dob:nc.dob, org:nc.org, guardian:nc.guardian, relation:nc.relation,
+        phone:nc.phone, email:nc.email, school:nc.school, lang:nc.lang, referral:nc.referral, notes:nc.notes,
+        states:{}, sessions:[], createdAt:new Date().toISOString().slice(0,10)};
       try{ await api.addChild(c); }catch(e){ ElementPlus.ElMessage.error('建立失敗：'+e.message); return; }
       children.unshift(c); counts[c.id]=0;
-      curChildId.value=c.id; f.name=c.name; f.sex=c.sex; f.dob=c.dob; if(c.org)f.org=c.org;
-      nc.name=''; nc.sex=''; nc.dob=''; ncDlg.value=false;
+      curChildId.value=c.id;
+      Object.keys(nc).forEach(k=>nc[k]=''); ncDlg.value=false;
       ElementPlus.ElMessage.success('檔案已建立並選中；可到「評估」頁按「立即評估」開始第一次評估');
     }
     function applyChildToForm(c){
