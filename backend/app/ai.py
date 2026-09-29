@@ -52,7 +52,24 @@ _MODEL_EXTRA = (
 )
 
 
-def call_llm(cfg: dict, prompt: str, max_tokens: int = 4000) -> str:
+def _thinking_kwargs(cfg: dict, max_tokens: int) -> dict:
+    """思考檔位：cfg.thinking = 'off' 關閉（速度快、避免推理耗盡輸出被截斷）/ 'on' 開啟 / 空 = 跟隨服務商預設。"""
+    t = cfg.get("thinking")
+    if t not in ("off", "on"):
+        return {}
+    if t == "off":
+        return {"thinking": {"type": "disabled"}}
+    return {"thinking": {"type": "enabled", "budget_tokens": min(4096, max(1024, max_tokens - 1024))}}
+
+
+def _reasoning_kwargs(cfg: dict) -> dict:
+    t = cfg.get("thinking")
+    if t not in ("off", "on"):
+        return {}
+    return {"reasoning": {"effort": "low" if t == "off" else "high"}}
+
+
+def call_llm(cfg: dict, prompt: str, max_tokens: int = 16384) -> str:
     """调用 LLM 返回文本；网络/上游失败抛 ValueError。"""
     key = (cfg.get("key") or "").strip()
     base = (cfg.get("base") or "").strip().rstrip("/")
@@ -66,7 +83,8 @@ def call_llm(cfg: dict, prompt: str, max_tokens: int = 4000) -> str:
                     json={
                         "model": cfg.get("model"),
                         "input": prompt,
-                        "max_output_tokens": max_tokens or 4000,
+                        "max_output_tokens": max_tokens or 16384,
+                        **_reasoning_kwargs(cfg),
                     },
                 )
                 if r.status_code >= 400:
@@ -101,8 +119,9 @@ def call_llm(cfg: dict, prompt: str, max_tokens: int = 4000) -> str:
                     headers=headers,
                     json={
                         "model": cfg.get("model"),
-                        "max_tokens": max_tokens or 4000,
+                        "max_tokens": max_tokens or 16384,
                         "messages": [{"role": "user", "content": prompt}],
+                        **_thinking_kwargs(cfg, max_tokens or 16384),
                     },
                 )
                 if r.status_code >= 400:
@@ -123,6 +142,7 @@ def call_llm(cfg: dict, prompt: str, max_tokens: int = 4000) -> str:
                     "model": cfg.get("model"),
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.4,
+                    **_thinking_kwargs(cfg, max_tokens or 16384),
                 },
             )
             if r.status_code >= 400:

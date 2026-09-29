@@ -73,17 +73,22 @@ async function directLLM(cfg, prompt, maxTokens){
   if(isResp){
     url = base.endsWith('/responses') ? base : base + '/responses';
     headers = {Authorization:'Bearer '+key};
-    body = {model:cfg.model, input:prompt, max_output_tokens:maxTokens||4000};
+    body = {model:cfg.model, input:prompt, max_output_tokens:maxTokens||16384};
   }else if(isAnth){
     url = _normAnth(base);
     headers = {'content-type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
     if(key.startsWith('sk-ant-oat')) headers['authorization']='Bearer '+key;   // Claude 訂閱 OAuth token
     else headers['x-api-key']=key;
-    body = {model:cfg.model, max_tokens:maxTokens||4000, messages:[{role:'user',content:prompt}]};
+    body = {model:cfg.model, max_tokens:maxTokens||16384, messages:[{role:'user',content:prompt}]};
   }else{
     url = _normBase(base);
     headers = {Authorization:'Bearer '+key};
-    body = {model:cfg.model, messages:[{role:'user',content:prompt}], temperature:0.4};
+    body = {model:cfg.model, messages:[{role:'user',content:prompt}], temperature:0.4, max_tokens:maxTokens||16384};
+  }
+  if(cfg.thinking==='off'||cfg.thinking==='on'){
+    if(isResp) body.reasoning={effort: cfg.thinking==='off'?'low':'high'};
+    else if(isAnth) body.thinking = cfg.thinking==='off' ? {type:'disabled'} : {type:'enabled', budget_tokens:Math.min(4096,(maxTokens||16384)-1024)};
+    else body.thinking={type: cfg.thinking==='off'?'disabled':'enabled'};
   }
   const ctl = new AbortController();
   const timer = setTimeout(()=>ctl.abort(), 180000);
@@ -104,12 +109,19 @@ async function directLLM(cfg, prompt, maxTokens){
     throw new Error('HTTP '+r.status+'：'+txt.slice(0,180)+extra);
   }
   let data; try{ data=JSON.parse(txt); }catch(e){ throw new Error('回應非 JSON：'+txt.slice(0,120)); }
+  let text='';
   if(isResp){
-    const out=(data.output||[]).map(o=>(o.content||[]).map(c=>c.text||'').join('')).join('');
-    return out || data.output_text || '';
+    text=(data.output||[]).map(o=>(o.content||[]).map(c=>c.text||'').join('')).join('') || data.output_text || '';
+  }else if(isAnth){
+    text=(data.content||[]).map(c=>c.text||'').join('');
+  }else{
+    text=((data.choices||[{}])[0].message||{}).content || '';
   }
-  if(isAnth) return (data.content||[]).map(c=>c.text||'').join('');
-  return ((data.choices||[{}])[0].message||{}).content || '';
+  if(!text){
+    const finish=(data.choices&&data.choices[0]&&data.choices[0].finish_reason)||data.stop_reason||'';
+    throw new Error('LLM 回應為空'+(finish?'（finish_reason='+finish+'）':'')+' — 常見原因：推理模型耗盡輸出上限（max_tokens）、協議不匹配或內容被過濾；可重試或在 AI 設定換模型。原始回應：'+txt.slice(0,800));
+  }
+  return text;
 }
 
 export const api = STANDALONE ? localApi() : remoteApi;

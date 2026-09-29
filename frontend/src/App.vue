@@ -599,6 +599,12 @@
     <el-form-item label="API 位址"><el-input v-model="aiCfg.base" placeholder="如 https://open.bigmodel.cn/api/v1"></el-input></el-form-item>
     <el-form-item label="API Key"><el-input v-model="aiCfg.key" type="password" show-password placeholder="sk-..."></el-input></el-form-item>
     <el-form-item label="模型"><el-input v-model="aiCfg.model" placeholder="glm-5.3 / deepseek-chat / claude-sonnet-4-5"></el-input></el-form-item>
+    <el-form-item label="思考檔位">
+      <el-select v-model="aiCfg.thinking" clearable placeholder="跟隨服務商預設" style="width:100%">
+        <el-option label="關閉思考（推薦：速度快，不會因推理耗盡輸出而截斷）" value="off"></el-option>
+        <el-option label="開啟思考（推理更強，輸出上限已提高到 16384）" value="on"></el-option>
+      </el-select>
+    </el-form-item>
   </el-form>
   <div style="display:flex;gap:10px;align-items:center">
     <el-button size="small" :loading="aiTesting" @click="testAi">測試連線</el-button>
@@ -735,7 +741,7 @@ const stim     = reactive(stimD);
     const children  = reactive([]);          // 輕量列表（下拉選單）
     const counts    = reactive({});          // id → 課程數（載入完整檔案時更新；輕量列表不含 sessions）
     const seeds     = reactive(DEFAULT_SEEDS.map(s=>({...s})));
-    const aiCfg     = reactive({type:'openai', base:'https://api.openai.com/v1/chat/completions', key:'', model:'gpt-4o-mini'});
+    const aiCfg     = reactive({type:'openai', base:'https://api.openai.com/v1/chat/completions', key:'', model:'gpt-4o-mini', thinking:''});
 
     function saveSeeds(){
       api.putSeeds(JSON.parse(JSON.stringify(seeds)))
@@ -994,7 +1000,7 @@ const stim     = reactive(stimD);
     // 三協議（openai / responses / anthropic）分支與 CORS 處理已整體移至後端 ai.py，前端只調代理
     async function callLLM(prompt, maxTokens){
       try{
-        const data=await api.aiChat(prompt, maxTokens||4000);
+        const data=await api.aiChat(prompt, maxTokens||16384);
         return data.text || '';
       }catch(e){ throw new Error(e.message || 'AI 請求失敗'); }
     }
@@ -1012,7 +1018,7 @@ const stim     = reactive(stimD);
           j=tryParse(s+'}'.repeat(Math.max(0,open))); }
       }
       if(!j || (!j.goals && !j.games))
-        throw new Error('AI 回應中找不到有效的方案 JSON。回應開頭：「'+(t||'(空回應)').slice(0,120)+'…」— 可再試一次或更換模型');
+        throw new Error('AI 回應中找不到有效的方案 JSON。回應開頭：「'+(t||'(空回應)').slice(0,400)+'…」— 可再試一次或更換模型');
       return j;
     }
 
@@ -1020,7 +1026,7 @@ const stim     = reactive(stimD);
       const weak=weakByDomain(band).map(w=>({範疇:DOM_NAME[w.d], 項目:w.items.slice(0,8)}));
       const lib=seeds.map(s=>({name:s.name, domain:DOM_NAME[s.domain], ages:`${s.amin}-${s.amax}歲`, goal:s.goal}));
       const prompt=`你是資深兒童言語治療師。根據以下評估結果，為兒童設計一次言語治療課堂的干預方案。\n兒童：${f.name||'未命名'}，${ageLabel.value}。\n評估弱項（需提示或未做到）：${JSON.stringify(weak)}\n可用遊戲／措施種子庫：${JSON.stringify(lib)}\n要求：4-5 個遊戲，優先從種子庫選取或改編，每個遊戲標明要達到的目標；訓練目標 3-5 條並對應弱項；全部用繁體中文。\n只輸出 JSON（無 markdown 代碼框）：{"goals":[{"text":"訓練目標","games":[{"name":"遊戲名稱","domain":"rec|exp|nar|pra|oral","target":"此遊戲要達到的目標","desc":"玩法"}]}]} 每個目標配 1-2 個遊戲，共 3-5 個遊戲。`;
-      let txt=await callLLM(prompt, 4000);
+      let txt=await callLLM(prompt, 16384);
       const j=parsePlanJSON(txt);
       const goals=(j.goals||[]).slice(0,6).map(g=>{
         if(typeof g==='string') return {text:g, games:[]};
@@ -1084,7 +1090,7 @@ const stim     = reactive(stimD);
         if(aiCfg.key){
           const cur=curVer();
           const prompt=`你是資深兒童言語治療師。以下是目前干預方案 JSON：\n${JSON.stringify({goals:cur.goals.map(g=>({text:g.text, games:g.games.map(x=>({name:x.name,domain:x.domain,target:x.target,desc:x.desc}))}))})}\n\n可用種子庫遊戲：${JSON.stringify(seeds.map(s=>({name:s.name,domain:DOM_NAME[s.domain],ages:s.amin+'-'+s.amax+'歲',goal:s.goal})))}\n\n治療師指示：${t}\n\n規則：只修改指示涉及的部分，其餘保留原樣；遊戲可從種子庫選取或改編；全部繁體中文。\n只輸出 JSON（無 markdown 代碼框）：{"goals":[{"text":"","games":[{"name":"","domain":"rec|exp|nar|pra|oral","target":"","desc":""}]}],"reply":"簡短說明做了什麼修改"}`;
-          const j=parsePlanJSON(await callLLM(prompt, 4000));
+          const j=parsePlanJSON(await callLLM(prompt, 16384));
           newVersion('修改：'+t.slice(0,10));
           const v=curVer();
           v.goals=(j.goals||[]).map(g=>({text:g.text||'', games:(g.games||[]).map(gm=>({name:gm.name||'',domain:domKeyOf(gm.domain),target:gm.target||'',desc:gm.desc||'',checked:true}))}));
