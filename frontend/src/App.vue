@@ -617,11 +617,31 @@
 </el-dialog>
 
 
-                <el-backtop :right="24" :bottom="24"></el-backtop>
+                <el-backtop :right="24" :bottom="88"></el-backtop>
         <div class="footer no-print">本量表供註冊言語治療師作臨床評估之用；評估結果須結合臨床觀察及專業判斷綜合解讀。</div>
 
       </el-main>
     </el-container>
+<!-- ═══════ 全局 AI 助理浮窗 ═══════ -->
+    <div class="ai-fab no-print" @click="chatOpen=!chatOpen" title="AI 助理">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div class="ai-panel no-print" v-if="chatOpen">
+      <div class="ai-hd">
+        <b>AI 助理</b>
+        <span class="note" style="margin:0;flex:1">{{ curChild ? '正在讀取：'+curChild.name+' 的檔案／評估／干預' : '未選擇兒童，可先問一般問題' }}</span>
+        <el-button link @click="chatOpen=false" style="font-size:16px">✕</el-button>
+      </div>
+      <div class="chat-box" ref="gChatBoxEl" style="height:340px;flex:1">
+        <div v-if="!gChatMsgs.length" class="msg assistant">我是平台 AI 助理，已讀取當前兒童的檔案、評估與干預資料。可以問我：「評估結果怎樣？」「下一節課建議練什麼？」「這個階段適合什麼遊戲？」</div>
+        <div v-for="(m,i) in gChatMsgs" :key="i" :class="['msg',m.role]">{{ m.text }}</div>
+        <div v-if="gChatLoading" class="msg assistant">⏳ 思考中…</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <el-input v-model="gChatInput" placeholder="輸入問題…" @keyup.enter="sendGlobalChat" :disabled="gChatLoading"></el-input>
+        <el-button type="primary" @click="sendGlobalChat" :loading="gChatLoading">送出</el-button>
+      </div>
+    </div>
   </el-container>
 </template>
 
@@ -1090,12 +1110,29 @@ const stim     = reactive(stimD);
       try{
         if(aiCfg.key){
           const cur=curVer();
-          const prompt=`你是資深兒童言語治療師。以下是目前干預方案 JSON：\n${JSON.stringify({goals:cur.goals.map(g=>({text:g.text, games:g.games.map(x=>({name:x.name,domain:x.domain,target:x.target,desc:x.desc}))}))})}\n\n可用種子庫遊戲：${JSON.stringify(seeds.map(s=>({name:s.name,domain:DOM_NAME[s.domain],ages:s.amin+'-'+s.amax+'歲',goal:s.goal})))}\n\n治療師指示：${t}\n\n規則：只修改指示涉及的部分，其餘保留原樣；遊戲可從種子庫選取或改編；全部繁體中文。\n只輸出 JSON（無 markdown 代碼框）：{"goals":[{"text":"","games":[{"name":"","domain":"rec|exp|nar|pra|oral","target":"","desc":""}]}],"reply":"簡短說明做了什麼修改"}`;
+          const m2=months(); const band=m2===null?3:Math.min(6,Math.floor(m2/12));
+          const norm=g=>JSON.stringify({goals:(g||[]).map(x=>({text:x.text||'', games:(x.games||[]).map(gm=>({name:gm.name||'',domain:gm.domain||'',target:gm.target||'',desc:gm.desc||''}))}))});
+          const before=norm(cur.goals);
+          const prompt=`你是資深兒童言語治療師，正在與治療師對話。兒童：${f.name||'未命名'}（${ageLabel.value}）。
+目前干預方案 JSON：\n${JSON.stringify({goals:cur.goals.map(g=>({text:g.text, games:g.games.map(x=>({name:x.name,domain:x.domain,target:x.target,desc:x.desc}))}))})}
+評估弱項：${JSON.stringify(weakByDomain(band).map(w=>({範疇:DOM_NAME[w.d],項目:w.items.slice(0,8)})))}
+可用種子庫遊戲：${JSON.stringify(seeds.map(s=>({name:s.name,domain:DOM_NAME[s.domain],ages:s.amin+'-'+s.amax+'歲',goal:s.goal})))}
+
+治療師訊息：${t}
+
+規則：
+1. 訊息是「修改指示」（換遊戲、改目標、加項目等）→ 只修改涉及部分，goals 輸出修改後的完整方案，reply 簡短說明改動。
+2. 訊息是「提問／諮詢」（問安排原因、遊戲是否合適、兒童情況等）→ goals 原樣保留完全不變，reply 詳細回答。
+全部繁體中文。只輸出 JSON（無 markdown 代碼框）：{"goals":[{"text":"","games":[{"name":"","domain":"rec|exp|nar|pra|oral","target":"","desc":""}]}],"reply":""}`;
           const j=parsePlanJSON(await callLLM(prompt, 16384));
-          newVersion('修改：'+t.slice(0,10));
-          const v=curVer();
-          v.goals=(j.goals||[]).map(g=>({text:g.text||'', games:(g.games||[]).map(gm=>({name:gm.name||'',domain:domKeyOf(gm.domain),target:gm.target||'',desc:gm.desc||'',checked:true}))}));
-          plan.value.chat.push({role:'assistant', text:j.reply||'已按指示更新方案（產生新版本，可於左上切換回舊版）'});
+          const after=(j.goals||[]).map(g=>({text:g.text||'', games:(g.games||[]).map(gm=>({name:gm.name||'',domain:domKeyOf(gm.domain),target:gm.target||'',desc:gm.desc||'',checked:true}))}));
+          if(norm(after)!==before){
+            newVersion('修改：'+t.slice(0,10));
+            curVer().goals=after;
+            plan.value.chat.push({role:'assistant', text:(j.reply||'已按指示更新方案')+'（產生新版本，可於左上切換回舊版）'});
+          }else{
+            plan.value.chat.push({role:'assistant', text:j.reply||'（方案未變更）'});
+          }
         } else {
           const v=curVer();
           if(/(加|增|多).{0,6}(遊戲|活動)/.test(t)){
@@ -1131,6 +1168,52 @@ const stim     = reactive(stimD);
     function delSession(id){
       const c=curChild.value; if(!c) return;
       const i=c.sessions.findIndex(s=>s.id===id); if(i>-1){ c.sessions.splice(i,1); saveCurChild(); }
+    }
+
+    // ═══════ 全局 AI 助理浮窗：讀取檔案/評估/干預全量上下文答問 ═══════
+    const chatOpen     = ref(false);
+    const gChatInput   = ref('');
+    const gChatLoading = ref(false);
+    const gChatMsgs    = ref([]);   // {role:'user'|'assistant', text}
+    const gChatBoxEl   = ref(null);
+    const gChatScroll  = async ()=>{ await nextTick(); if(gChatBoxEl.value) gChatBoxEl.value.scrollTop=gChatBoxEl.value.scrollHeight; };
+    function childContext(){
+      const c=curChild.value;
+      if(!c) return '（尚未選擇兒童檔案）';
+      const L=[`姓名 ${c.name}；性別 ${c.sex||'—'}；出生 ${c.dob||'—'}（${ageLabel.value}）；機構 ${c.org||'—'}；學校/班級 ${c.school||'—'}；家庭語言 ${c.lang||'—'}；監護人 ${c.guardian||'—'}${c.relation?'（'+c.relation+'）':''} 電話 ${c.phone||'—'}；轉介來源 ${c.referral||'—'}；備註 ${c.notes||'—'}`];
+      const as=c.assessments||[];
+      L.push(`評估記錄 ${as.length} 條${as.length?'：'+as.map(a=>a.adate||'未填日期').join('、'):''}`);
+      const cur=as.find(a=>a.id===curAssessId.value)||[...as].sort((a,b)=>(b.ts||0)-(a.ts||0))[0];
+      if(cur){
+        const st=cur.states||{}; const weak={rec:[],exp:[],nar:[],pra:[],oral:[]}; let done=0,part=0,none=0;
+        PAGES.forEach(p=>p.groups.forEach(g=>g.items.forEach(it=>{
+          const v=st[it.id]||0;
+          if(v===2)done++; else if(v===1){part++; if(weak[g.d])weak[g.d].push(it.t);} else if(v===3){none++; if(weak[g.d])weak[g.d].push(it.t);}
+        })));
+        L.push(`最新評估（${cur.adate||'未填日期'}）：診斷 ${cur.dx||'—'}${cur.sev?'（'+cur.sev+'）':''}；獨立完成 ${done} 項、需提示 ${part} 項、未掌握 ${none} 項`);
+        Object.entries(weak).forEach(([d,items])=>{ if(items.length) L.push(`  ${DOM_NAME[d]}需加強：${items.slice(0,8).join('、')}${items.length>8?'等':''}`); });
+        if(cur.obs) L.push('臨床觀察：'+[cur.obs.o1,cur.obs.o2,cur.obs.o3].filter(Boolean).join('／'));
+      }
+      if(c.sessions&&c.sessions.length)
+        L.push('課程記錄：\n'+c.sessions.slice(-15).map(s=>`第${s.no}次(${s.date||'—'}) 目標：${(s.goals||[]).join('；')}｜遊戲：${(s.games||[]).map(g=>g.name).join('、')}｜效果：${s.effect?.level||'待評'}`).join('\n'));
+      if(plan.value&&curVer())
+        L.push('目前干預方案（工作區）：'+curVer().goals.map((g,i)=>`目標${i+1}：${g.text}（遊戲：${g.games.filter(x=>x.checked).map(x=>x.name).join('、')||'無'}）`).join('；'));
+      return L.join('\n');
+    }
+    async function sendGlobalChat(){
+      const t=gChatInput.value.trim(); if(!t||gChatLoading.value) return;
+      gChatMsgs.value.push({role:'user', text:t}); gChatInput.value='';
+      gChatLoading.value=true; gChatScroll();
+      try{
+        if(!aiCfg.key) throw new Error('尚未設定 AI — 請到「設置」頁開啟 AI 設定填入');
+        const hist=gChatMsgs.value.slice(-8,-1).map(m=>`${m.role==='user'?'治療師':'助理'}：${m.text}`).join('\n');
+        const prompt=`你是兒童言語治療工作平台的 AI 助理，服務對象是註冊言語治療師。請根據以下兒童完整資料回答問題；全部繁體中文；資料不足時如實說明，不要編造。\n【兒童資料】\n${childContext()}\n${hist?'【最近對話】\n'+hist+'\n':''}【治療師問題】${t}`;
+        const data=await api.aiChat(prompt, 4096);
+        gChatMsgs.value.push({role:'assistant', text:data.text||'（空回應）'});
+      }catch(e){
+        gChatMsgs.value.push({role:'assistant', text:'⚠️ '+e.message});
+      }
+      gChatLoading.value=false; gChatScroll();
     }
     function saveAiCfg(){
       api.putAi(JSON.parse(JSON.stringify(aiCfg)))
