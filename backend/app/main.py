@@ -300,6 +300,59 @@ def delete_record(rid: str, user: dict = Depends(current_user)):
     return Response(status_code=204)
 
 
+# ---------- 全量导出 / 導入（僅管理員，跨設備遷移） ----------
+
+@app.get("/api/data/export")
+def export_data(admin: dict = Depends(require_admin)):
+    with closing(db.get_conn()) as conn:
+        users = [dict(r) for r in conn.execute(
+            "SELECT id, username, display_name, role, pw_salt, pw_hash, disabled, created_at FROM users").fetchall()]
+        children = [dict(r) for r in conn.execute(
+            "SELECT id, name, data, updated_at, owner FROM children").fetchall()]
+        seeds = [json.loads(r["data"]) for r in conn.execute("SELECT data FROM seeds ORDER BY rowid").fetchall()]
+        ai_settings = [dict(r) for r in conn.execute("SELECT key, value FROM app_settings").fetchall()]
+        ver = conn.execute("PRAGMA user_version").fetchone()[0]
+    return {
+        "app": "st-work-platform", "mode": "server", "schema_version": ver,
+        "exported_at": _now(), "users": users, "children": children,
+        "seeds": seeds, "ai_settings": ai_settings,
+    }
+
+
+@app.post("/api/data/import")
+def import_data(body: dict = Body(...), admin: dict = Depends(require_admin)):
+    # 全量覆蓋導入：用戶（含密碼材料）/兒童檔案/種子庫/AI 設定；導入後需重新登入。
+    if body.get("app") != "st-work-platform":
+        raise HTTPException(400, "不是本平台的備份檔案")
+    if body.get("mode") != "server":
+        raise HTTPException(400, "此備份來自單檔版，請在單檔版中導入")
+    users = body.get("users") or []
+    children = body.get("children") or []
+    seeds = body.get("seeds") or []
+    ai_settings = body.get("ai_settings") or []
+    if not isinstance(users, list) or not isinstance(children, list) or not users:
+        raise HTTPException(400, "備份格式不正確（缺少用戶或兒童數據）")
+    with closing(db.get_conn()) as conn:
+        conn.execute("DELETE FROM auth_sessions")
+        conn.execute("DELETE FROM children")
+        conn.execute("DELETE FROM seeds")
+        conn.execute("DELETE FROM app_settings")
+        conn.execute("DELETE FROM users")
+        conn.executemany(
+            "INSERT INTO users(id, username, display_name, role, pw_salt, pw_hash, disabled, created_at)"
+            " VALUES(:id, :username, :display_name, :role, :pw_salt, :pw_hash, :disabled, :created_at)", users)
+        conn.executemany(
+            "INSERT INTO children(id, name, data, updated_at, owner) VALUES(:id, :name, :data, :updated_at, :owner)",
+            children)
+        conn.executemany(
+            "INSERT INTO seeds(id, data) VALUES(:id, :data)",
+            [{"id": s["id"], "data": json.dumps(s, ensure_ascii=False)} for s in seeds])
+        conn.executemany(
+            "INSERT INTO app_settings(key, value) VALUES(:key, :value)", ai_settings)
+        conn.commit()
+    return {"ok": True, "users": len(users), "children": len(children), "seeds": len(seeds)}
+
+
 # ---------- 种子库（整组读写，对应客户端 saveSeeds/importSeeds/resetSeeds） ----------
 
 @app.get("/api/seeds")

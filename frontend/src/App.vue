@@ -543,6 +543,18 @@
         <section v-show="curPage==='settings'">
           <el-card shadow="never" v-if="me && me.role==='admin'">
             <template #header>
+              <b>数据管理</b><span class="sub-hint">全量备份（用户/档案/评估/课程/种子库/AI 设定），JSON 文件跨设备恢复</span>
+            </template>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <el-button type="primary" :loading="exporting" @click="exportData">导出备份（JSON）</el-button>
+              <el-upload :auto-upload="false" :show-file-list="false" accept=".json" :on-change="onImportFile">
+                <el-button>导入备份（覆盖现有数据）</el-button>
+              </el-upload>
+              <span class="note" style="margin:0">备份含全部用户与密码材料，请妥善保管；导入会覆盖现有全部数据，完成后需重新登录。</span>
+            </div>
+          </el-card>
+          <el-card shadow="never" v-if="me && me.role==='admin'">
+            <template #header>
               <b>用戶管理</b><span class="sub-hint">不同用戶的兒童檔案、評估與干預數據相互隔離；種子庫為平台共享</span>
               <el-button size="small" type="primary" style="float:right" @click="usersDlg=true">＋ 新增用戶</el-button>
             </template>

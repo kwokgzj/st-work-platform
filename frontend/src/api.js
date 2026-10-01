@@ -32,6 +32,8 @@ const remoteApi = {
   createUser: body => post('/api/users', body),
   updateUser: (uid, body) => put('/api/users/'+encodeURIComponent(uid), body),
   delUser : uid => del('/api/users/'+encodeURIComponent(uid)),
+  exportData: () => get('/api/data/export'),
+  importData: body => post('/api/data/import', body),
   // 業務
   listChildren : ()      => get('/api/records'),
   getChild     : id      => get('/api/records/'+encodeURIComponent(id)),
@@ -131,6 +133,28 @@ function localApi(){
       if(uid===curUid()) throw new Error('不能刪除自己的帳號');
       lsWrite(U, (await ensureUsers()).filter(x=>x.id!==uid));
       localStorage.removeItem(kidsKey(uid)); localStorage.removeItem(aiKey(uid));
+      return {ok:true};
+    },
+    async exportData(){
+      const users=await ensureUsers();
+      const childrenByUser={}, aiByUser={};
+      for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+        if(k&&k.startsWith('plas_children__')) childrenByUser[k]=JSON.parse(localStorage.getItem(k)||'[]');
+        if(k&&k.startsWith('plas_ai__')) aiByUser[k]=JSON.parse(localStorage.getItem(k)||'null');
+      }
+      return {app:'st-work-platform', mode:'standalone', exported_at:new Date().toISOString(),
+        users:users.map(u=>({...u})), childrenByUser, aiByUser, seeds:lsRead(SEEDS,[])};
+    },
+    async importData(data){
+      if(data.app!=='st-work-platform') throw new Error('不是本平台的備份檔案');
+      if(data.mode!=='standalone') throw new Error('此備份來自伺服器版，請在伺服器版中導入');
+      if(!Array.isArray(data.users)||!data.users.length) throw new Error('備份格式不正確');
+      localStorage.removeItem(SESS);
+      for(let i=localStorage.length-1;i>=0;i--){ const k=localStorage.key(i);
+        if(k&&(k.startsWith('plas_children__')||k.startsWith('plas_ai__'))) localStorage.removeItem(k); }
+      Object.entries(data.childrenByUser||{}).forEach(([k,v])=>lsWrite(k,v));
+      Object.entries(data.aiByUser||{}).forEach(([k,v])=>lsWrite(k,v));
+      lsWrite(SEEDS, data.seeds||[]); lsWrite(U, data.users||[]);
       return {ok:true};
     },
     // 業務（當前用戶作用域）

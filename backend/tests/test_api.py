@@ -193,6 +193,26 @@ def test_user_isolation():
     assert all(x["id"] != "c_t2" for x in client.get("/api/records").json())
 
 
+def test_data_export_import_roundtrip():
+    # 导出：含用户与儿童，且不带会话
+    r = client.get("/api/data/export")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["app"] == "st-work-platform" and data["mode"] == "server"
+    assert any(u["username"] == "admin" for u in data["users"])
+    assert len(data["children"]) >= 1
+
+    # 导入同一份 → 覆盖成功且数据仍在（会话被清，需重新登录）
+    r = client.post("/api/data/import", json=data)
+    assert r.status_code == 200
+    assert client.get("/api/records").status_code == 401
+    client.headers["Authorization"] = "Bearer " + client.post(
+        "/api/auth/login", json={"username": "admin", "password": "123456"}).json()["token"]
+    assert len(client.get("/api/records").json()) >= 1
+    # 格式守卫
+    assert client.post("/api/data/import", json={**data, "mode": "standalone"}).status_code == 400
+
+
 if __name__ == "__main__":
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for fn in fns:

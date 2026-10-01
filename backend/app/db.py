@@ -4,6 +4,14 @@
 - plas_children → children（儿童档案，整份 JSON，按用户隔离）
 - plas_seeds    → seeds（干预种子库，整组读写，平台共享）
 - plas_ai       → app_settings（key='ai:<user_id>'，按用户隔离）
+
+── 扩展指南（新增字段/表不影响旧数据）──
+1. 业务数据全部存于 children.data（JSON blob，schema-free）：客户端新增字段直接写入 JSON，
+   数据库零迁移，旧记录缺字段按默认值处理。
+2. 需要新表/新索引/新列：在 init_db() 追加新的 `if version < N:` 块（N 递增），只做加法
+   （CREATE TABLE IF NOT EXISTS / ADD COLUMN / 数据回填），不改不删旧列，然后 PRAGMA user_version = N；
+   旧库打开时自动按序升级。
+3. 全量备份/恢复见 /api/data/export 与 /api/data/import（僅管理員）；备份含 schema_version。
 """
 import hashlib
 import os
