@@ -76,6 +76,41 @@ def _auth_login_row(row) -> dict:
     return {"token": _new_token(row["id"]), "user": _public_user(dict(row))}
 
 
+@app.get("/api/auth/has_users")
+def auth_has_users():
+    with closing(db.get_conn()) as conn:
+        n = conn.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]
+    return {"hasUsers": n > 0}
+
+
+@app.post("/api/auth/setup")
+def auth_setup(body: dict = Body(...)):
+    """首次初始化：僅在系統內沒有任何用戶時可調用，創建第一個管理員並接收存量檔案。"""
+    username = (body.get("username") or "").strip()
+    password = body.get("password") or ""
+    display = (body.get("display_name") or "").strip() or username
+    if not username or len(password) < 6:
+        raise HTTPException(400, "帳號必填，密碼至少 6 位")
+    with closing(db.get_conn()) as conn:
+        if conn.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"] > 0:
+            raise HTTPException(403, "系統已初始化，請直接登入")
+        # 孤兒檔案（含舊版預設管理員遺留）歸入首個管理員
+        conn.execute(
+            "UPDATE children SET owner = ? WHERE owner = ''"
+            " OR owner NOT IN (SELECT id FROM users)",
+            (uid_placeholder := "u" + secrets.token_hex(8),),
+        )
+        salt = secrets.token_hex(16)
+        conn.execute(
+            "INSERT INTO users(id, username, display_name, role, pw_salt, pw_hash, disabled, created_at)"
+            " VALUES(?,?,?,'admin',?,?,0,?)",
+            (uid_placeholder, username, display, salt, db.hash_pw(password, salt), _now()),
+        )
+        conn.commit()
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (uid_placeholder,)).fetchone()
+    return _auth_login_row(dict(row))
+
+
 @app.post("/api/auth/login")
 def auth_login(body: dict = Body(...)):
     username = (body.get("username") or "").strip()

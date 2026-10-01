@@ -24,6 +24,8 @@ const remoteApi = {
   // 鑑權
   login   : body => post('/api/auth/login', body),
   register: body => post('/api/auth/register', body),
+  hasUsers: () => get('/api/auth/has_users').then(d=>d.hasUsers),
+  setup   : body => post('/api/auth/setup', body),
   me      : () => get('/api/auth/me'),
   logout  : () => { localStorage.removeItem(TOKEN_KEY); return Promise.resolve(); },
   listUsers: () => get('/api/users'),
@@ -53,15 +55,7 @@ function lsWrite(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 const clone = v => Promise.resolve(JSON.parse(JSON.stringify(v)));
 async function sha(t){ const b=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
   return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
-async function ensureUsers(){
-  let u=lsRead(U, []);
-  if(!u.length){   // 首次：內建管理員 admin / 123456
-    const salt=Math.random().toString(16).slice(2);
-    u=[{id:'u_admin', username:'admin', display_name:'管理員', role:'admin', salt, pw:await sha(salt+'123456'), disabled:0}];
-    lsWrite(U, u);
-  }
-  return u;
-}
+async function ensureUsers(){ return lsRead(U, []); }   // 無預設帳號：首次打開由「初始化管理員」創建
 function localUsersAll(){ return lsRead(U, []); }
 const pub = u => ({id:u.id, username:u.username, display_name:u.display_name, role:u.role, disabled:u.disabled||0});
 function curUid(){ const sess=lsRead(SESS, null); if(!sess||!sess.userId) throw new Error('未登入'); return sess.userId; }
@@ -76,9 +70,22 @@ function localApi(){
       if(!u || u.pw!==await sha(u.salt+(body.password||''))) throw new Error('帳號或密碼錯誤');
       if(u.disabled) throw new Error('帳號已停用，請聯繫管理員');
       lsWrite(SESS, {userId:u.id});
-      if(u.id==='u_admin' && localStorage.getItem('plas_children') && !localStorage.getItem(kidsKey(u.id))){
-        localStorage.setItem(kidsKey(u.id), localStorage.getItem('plas_children'));   // 舊數據歸入 admin
+      return clone({token:'local', user:pub(u)});
+    },
+    async hasUsers(){ return (await ensureUsers()).length>0; },
+    async setup(body){
+      const users=await ensureUsers();
+      if(users.length) throw new Error('系統已初始化，請直接登入');
+      const username=(body.username||'').trim();
+      if(!username || (body.password||'').length<6) throw new Error('帳號必填，密碼至少 6 位');
+      const salt=Math.random().toString(16).slice(2);
+      const u={id:'u'+Date.now().toString(16), username, display_name:(body.display_name||'').trim()||username,
+               role:'admin', salt, pw:await sha(salt+body.password), disabled:0};
+      users.push(u); lsWrite(U, users);
+      if(localStorage.getItem('plas_children') && !localStorage.getItem(kidsKey(u.id))){
+        localStorage.setItem(kidsKey(u.id), localStorage.getItem('plas_children'));   // 舊單檔數據歸入首個管理員
       }
+      lsWrite(SESS, {userId:u.id});
       return clone({token:'local', user:pub(u)});
     },
     async register(body){

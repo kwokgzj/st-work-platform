@@ -22,9 +22,12 @@ from app.main import app  # noqa: E402
 client = TestClient(app)
 
 # ── 登入預設管理員，後續所有請求自動帶上 Bearer token ──
-_r = client.post("/api/auth/login", json={"username": "admin", "password": "123456"})
-assert _r.status_code == 200, "預設管理員登入失敗"
+_r = client.post("/api/auth/setup", json={"username": "admin", "display_name": "管理員", "password": "123456"})
+assert _r.status_code == 200, "首次初始化失敗"
+assert _r.json()["user"]["role"] == "admin"
 client.headers["Authorization"] = "Bearer " + _r.json()["token"]
+# 已初始化後不可重複 setup
+assert client.post("/api/auth/setup", json={"username": "x", "password": "abcdef"}).status_code == 403
 
 CHILD = {
     "id": "c1698000000000",

@@ -85,15 +85,13 @@ def init_db() -> None:
                 );
             """)
             conn.execute("ALTER TABLE children ADD COLUMN owner TEXT NOT NULL DEFAULT ''")
-            # 默认管理员 admin / 123456（首登后可在用户管理修改）
-            salt = secrets.token_hex(16)
-            conn.execute(
-                "INSERT OR IGNORE INTO users(id, username, display_name, role, pw_salt, pw_hash, disabled, created_at)"
-                " VALUES(?,?,?,?,?,?,0,datetime('now'))",
-                ("u_admin", "admin", "管理員", "admin", salt, hash_pw("123456", salt)),
-            )
-            conn.execute(
-                "UPDATE children SET owner=(SELECT id FROM users WHERE username='admin') WHERE owner=''"
-            )
             conn.execute("PRAGMA user_version = 2")
+            conn.commit()
+        if version < 3:
+            # 移除舊版自動預設的管理員種子帳號（若從未被使用），改由首次開機自行創建
+            n = conn.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]
+            if n == 1 and conn.execute("SELECT 1 FROM users WHERE id = 'u_admin'").fetchone():
+                conn.execute("DELETE FROM auth_sessions WHERE user_id = 'u_admin'")
+                conn.execute("DELETE FROM users WHERE id = 'u_admin'")
+            conn.execute("PRAGMA user_version = 3")
             conn.commit()

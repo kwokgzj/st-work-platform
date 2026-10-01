@@ -7,7 +7,20 @@
         <div class="login-logo">ST</div>
         <b style="font-size:17px">言語治療工作平台</b>
         <div class="note" style="margin:0 0 4px">學前兒童口語評估量表（0–6 歲）</div>
-        <el-tabs v-model="loginTab" stretch>
+        <template v-if="loginState==='setup'">
+          <el-form label-width="70px" @submit.prevent style="width:100%;margin-top:10px">
+            <el-alert type="info" :closable="false" style="margin-bottom:12px;line-height:1.7"
+              title="首次使用：請創建管理員帳號（帳號資訊僅保存在本平台，無任何預設密碼）"></el-alert>
+            <el-form-item label="帳號"><el-input v-model="setupForm.username"></el-input></el-form-item>
+            <el-form-item label="姓名"><el-input v-model="setupForm.display_name" placeholder="治療師姓名"></el-input></el-form-item>
+            <el-form-item label="密碼"><el-input v-model="setupForm.password" type="password" show-password placeholder="至少 6 位"></el-input></el-form-item>
+            <el-form-item label="確認"><el-input v-model="setupForm.password2" type="password" show-password @keyup.enter="doSetup"></el-input></el-form-item>
+            <el-button type="primary" style="width:100%" :loading="loginBusy" @click="doSetup">初始化並登入</el-button>
+          </el-form>
+        </template>
+        <template v-else>
+          <div v-if="loginState==='checking'" style="width:100%;padding:30px 0;color:var(--el-text-color-secondary)">載入中…</div>
+          <el-tabs v-model="loginTab" stretch v-else>
           <el-tab-pane label="登錄" name="in">
             <el-form label-width="70px" @submit.prevent>
               <el-form-item label="帳號"><el-input v-model="loginForm.username" placeholder="帳號" @keyup.enter="doLogin"></el-input></el-form-item>
@@ -25,7 +38,7 @@
             </el-form>
           </el-tab-pane>
         </el-tabs>
-        <div class="note" style="margin:8px 0 0;text-align:center">首次使用：帳號 admin／密碼 123456</div>
+        </template>
       </div>
     </div>
 
@@ -1502,6 +1515,8 @@ const stim     = reactive(stimD);
     }
     // ── 登入與初始化 ──
     const me = ref(null);
+    const loginState = ref('checking');   // checking | setup（首次：創建管理員）| auth（登入/註冊）
+    const setupForm  = reactive({username:'', display_name:'', password:'', password2:''});
     const loginTab  = ref('in');
     const loginBusy = ref(false);
     const loginForm = reactive({username:'', password:''});
@@ -1521,6 +1536,18 @@ const stim     = reactive(stimD);
         await refreshChildren();
         if(me.value && me.value.role==='admin') await refreshUsers();
       }catch(e){ console.warn('初始化失敗：', e.message); }
+    }
+    async function doSetup(){
+      if(!setupForm.username.trim() || setupForm.password.length<6){ ElementPlus.ElMessage.warning('帳號必填，密碼至少 6 位'); return; }
+      if(setupForm.password!==setupForm.password2){ ElementPlus.ElMessage.warning('兩次密碼不一致'); return; }
+      loginBusy.value=true;
+      try{
+        const res=await api.setup({username:setupForm.username, display_name:setupForm.display_name, password:setupForm.password});
+        me.value=res.user; loginState.value='auth';
+        ElementPlus.ElMessage.success('管理員已創建，歡迎，'+(me.value.display_name||me.value.username));
+        await afterLogin();
+      }catch(e){ ElementPlus.ElMessage.error(e.message); }
+      loginBusy.value=false;
     }
     async function doLogin(){
       if(!loginForm.username.trim() || !loginForm.password){ ElementPlus.ElMessage.warning('請輸入帳號與密碼'); return; }
@@ -1577,7 +1604,9 @@ const stim     = reactive(stimD);
     (async function initAuth(){
       try{
         const u=await api.me();
-        if(u && u.username){ me.value=u; await afterLogin(); }
-      }catch(e){ /* 未登入 → 顯示登入頁 */ }
+        if(u && u.username){ me.value=u; loginState.value='auth'; await afterLogin(); return; }
+      }catch(e){}
+      try{ loginState.value = (await api.hasUsers()) ? 'auth' : 'setup'; }
+      catch(e){ loginState.value='auth'; }
     })();
 </script>
