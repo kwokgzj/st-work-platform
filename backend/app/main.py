@@ -157,12 +157,12 @@ def ai_chat(body: dict = Body(...)):
     if not cfg.get("base") or not cfg.get("key"):
         raise HTTPException(400, "尚未設定 AI，請先在「AI 設定」中填寫並儲存")
     try:
-        text = ai.call_llm(cfg, prompt, body.get("max_tokens") or 16384)
+        res = ai.call_llm(cfg, prompt, body.get("max_tokens") or 16384)
     except ValueError as e:
         raise HTTPException(502, str(e))
-    if not text or not text.strip():
+    if not res["text"] or not res["text"].strip():
         raise HTTPException(502, "LLM 回應為空 — 常見於推理模型耗盡輸出上限或協議不匹配，請重試或在 AI 設定更換模型/關閉思考")
-    return {"text": text}
+    return {"text": res["text"], "reasoning": res.get("reasoning") or ""}
 
 
 # ---------- 静态托管（前端构建产物；须在 API 路由之后挂载） ----------

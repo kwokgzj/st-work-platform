@@ -55,7 +55,7 @@ function localApi(){
     aiChat: (prompt, max_tokens) => {
       const cfg = lsRead(AI, null) || {};
       if(!cfg.base || !cfg.key) return Promise.reject(new Error('尚未設定 AI，請先到「設置」頁填寫並儲存'));
-      return directLLM(cfg, prompt, max_tokens).then(t=>({text:t}));
+      return directLLM(cfg, prompt, max_tokens).then(r=>({text:r.text, reasoning:r.reasoning||''}));
     },
   };
 }
@@ -109,13 +109,16 @@ async function directLLM(cfg, prompt, maxTokens){
     throw new Error('HTTP '+r.status+'：'+txt.slice(0,180)+extra);
   }
   let data; try{ data=JSON.parse(txt); }catch(e){ throw new Error('回應非 JSON：'+txt.slice(0,120)); }
-  let text='';
+  let text='', reasoning='';
   if(isResp){
     text=(data.output||[]).map(o=>(o.content||[]).map(c=>c.text||'').join('')).join('') || data.output_text || '';
   }else if(isAnth){
     text=(data.content||[]).map(c=>c.text||'').join('');
+    reasoning=(data.content||[]).filter(c=>c.type==='thinking').map(c=>c.thinking||'').join('\n');
   }else{
-    text=((data.choices||[{}])[0].message||{}).content || '';
+    const msg=(data.choices||[{}])[0].message||{};
+    text=msg.content || '';
+    reasoning=msg.reasoning_content || msg.reasoning || '';
   }
   if(!text){
     const finish=(data.choices&&data.choices[0]&&data.choices[0].finish_reason)||data.stop_reason||'';
@@ -124,7 +127,7 @@ async function directLLM(cfg, prompt, maxTokens){
       throw new Error('模型把輸出全部用於思考（finish_reason=length，思考了 '+(data.usage&&data.usage.completion_tokens||'?')+' tokens 仍未寫正文）— 請在「AI 設定」將思考檔位設為「關閉思考」，或提高輸出上限。思考開頭：'+reasoning.slice(0,300));
     throw new Error('LLM 回應為空'+(finish?'（finish_reason='+finish+'）':'')+' — 常見原因：推理模型耗盡輸出上限、協議不匹配或內容被過濾；可重試或在 AI 設定換模型/關閉思考。原始回應：'+txt.slice(0,800));
   }
-  return text;
+  return {text, reasoning};
 }
 
 export const api = STANDALONE ? localApi() : remoteApi;

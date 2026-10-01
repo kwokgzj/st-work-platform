@@ -70,7 +70,7 @@ def _reasoning_kwargs(cfg: dict) -> dict:
 
 
 def call_llm(cfg: dict, prompt: str, max_tokens: int = 16384) -> str:
-    """调用 LLM 返回文本；网络/上游失败抛 ValueError。"""
+    """调用 LLM，返回 {"text", "reasoning"}；网络/上游失败抛 ValueError。"""
     key = (cfg.get("key") or "").strip()
     base = (cfg.get("base") or "").strip().rstrip("/")
     try:
@@ -100,7 +100,7 @@ def call_llm(cfg: dict, prompt: str, max_tokens: int = 16384) -> str:
                     "".join(c.get("text") or "" for c in (o.get("content") or []))
                     for o in (data.get("output") or [])
                 )
-                return txt or data.get("output_text") or ""
+                return {"text": txt or data.get("output_text") or "", "reasoning": ""}
 
             if _is_anthropic(cfg):
                 url = _norm_anthropic(base)
@@ -132,7 +132,8 @@ def call_llm(cfg: dict, prompt: str, max_tokens: int = 16384) -> str:
                     )
                     raise _http_err(r.status_code, r.text, extra)
                 data = r.json()
-                return "".join(c.get("text") or "" for c in (data.get("content") or []))
+                reasoning = "".join(c.get("thinking") or "" for c in (data.get("content") or []) if c.get("type") == "thinking")
+                return {"text": "".join(c.get("text") or "" for c in (data.get("content") or [])), "reasoning": reasoning}
 
             url = _norm_base(base)
             r = client.post(
@@ -154,7 +155,8 @@ def call_llm(cfg: dict, prompt: str, max_tokens: int = 16384) -> str:
                 raise _http_err(r.status_code, r.text, extra)
             data = r.json()
             choices = data.get("choices") or [{}]
-            return (choices[0].get("message") or {}).get("content") or ""
+            msg = choices[0].get("message") or {}
+            return {"text": msg.get("content") or "", "reasoning": msg.get("reasoning_content") or msg.get("reasoning") or ""}
     except httpx.TimeoutException:
         raise ValueError("請求逾時（超過 3 分鐘未回應），請重試或更換較快的模型")
     except httpx.TransportError as e:

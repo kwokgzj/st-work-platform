@@ -634,8 +634,20 @@
       </div>
       <div class="chat-box" ref="gChatBoxEl" style="height:340px;flex:1">
         <div v-if="!gChatMsgs.length" class="msg assistant">我是平台 AI 助理，可查詢所有兒童的檔案、評估記錄、課程與干預方案，也能搜尋遊戲庫。試試：「列出所有兒童」「小明的評估結果怎樣？」「小美最近上課效果如何？」「5 歲理解類有什麼遊戲？」</div>
-        <div v-for="(m,i) in gChatMsgs" :key="i" :class="['msg',m.role]">{{ m.text }}</div>
-        <div v-if="gChatLoading" class="msg assistant">⏳ 思考中…</div>
+        <div v-for="(m,i) in gChatMsgs" :key="i" :class="['msg',m.role]">
+          <template v-if="m.role==='assistant' && ((m.steps&&m.steps.length)||m.reasoning)">
+            <div class="ai-trace" @click="m.open=!m.open">⚙ 執行過程（{{ m.steps?.length||0 }} 次工具調用{{ m.reasoning?'・含思考過程':'' }}）{{ m.open?'▴':'▾' }}</div>
+            <div v-if="m.open" class="ai-trace-body">
+              <div v-if="m.reasoning" class="ai-step"><div class="ai-step-t">💭 思考過程</div><pre>{{ m.reasoning }}</pre></div>
+              <div v-for="(st,si) in m.steps||[]" :key="si" class="ai-step">
+                <div class="ai-step-t">🔧 {{ si+1 }}. {{ st.tool }} <span class="ai-args">{{ JSON.stringify(st.args) }}</span></div>
+                <pre>{{ st.result }}</pre>
+              </div>
+            </div>
+          </template>
+          <span style="white-space:pre-wrap">{{ m.text }}</span>
+        </div>
+        <div v-if="gChatLoading" class="msg assistant">⏳ {{ gChatStatus || '思考中…' }}</div>
       </div>
       <div style="display:flex;gap:8px">
         <el-input v-model="gChatInput" placeholder="輸入問題…" @keyup.enter="sendGlobalChat" :disabled="gChatLoading"></el-input>
@@ -1176,6 +1188,7 @@ const stim     = reactive(stimD);
     const gChatLoading = ref(false);
     const gChatMsgs    = ref([]);   // {role:'user'|'assistant', text}
     const gChatBoxEl   = ref(null);
+    const gChatStatus  = ref('');
     const gChatScroll  = async ()=>{ await nextTick(); if(gChatBoxEl.value) gChatBoxEl.value.scrollTop=gChatBoxEl.value.scrollHeight; };
     function childContext(){   // 當前兒童速覽（進提示詞用）
       const c=curChild.value;
@@ -1193,13 +1206,18 @@ const stim     = reactive(stimD);
         const tools=makeTools({children, curChild, curAssessId, plan, curVer, seeds, api, normalizeAssessments});
         const hist=gChatMsgs.value.slice(-8,-1).map(m=>`${m.role==='user'?'治療師':'助理'}：${m.text}`).join('\n');
         let transcript=`【當前兒童速覽】\n${childContext()}\n${hist?'【最近對話】\n'+hist+'\n':''}【治療師問題】${t}`;
-        let answer='';
+        let answer='', reasoning='';
+        const steps=[];
         for(let i=0;i<6;i++){
+          gChatStatus.value = steps.length ? `已查詢 ${steps.length} 次，繼續分析…` : '正在分析問題…';
           const prompt=`你是兒童言語治療工作平台的 AI 助理，服務對象是註冊言語治療師，透過工具查詢平台資料回答（最多可連續呼叫 6 次）。全部繁體中文；資料不足如實說明，不要編造。\n${tools.spec}\n\n【已收集資訊與對話】\n${transcript}\n\n請只輸出 JSON（無 markdown 代碼框）：{"tool":"...","args":{...}} 或 {"answer":"..."}`;
           const data=await api.aiChat(prompt, 4096);
+          if(data.reasoning) reasoning+=data.reasoning+'\n';
           let j=null; try{ j=JSON.parse(String(data.text||'').replace(/```json|```/gi,'').trim()); }catch(e){}
           if(j && j.tool){
+            gChatStatus.value=`執行工具 ${j.tool}…`;
             const out=await tools.run(j.tool, j.args).catch(e=>'工具錯誤：'+e.message);
+            steps.push({tool:j.tool, args:j.args||{}, result:String(out)});
             transcript+=`\n助理：${j.tool}(${JSON.stringify(j.args||{})})\n[結果]\n${out}`;
             continue;
           }
@@ -1207,11 +1225,14 @@ const stim     = reactive(stimD);
           break;
         }
         if(!answer){   // 工具次數用完：強制總結
+          gChatStatus.value='整理最終回答…';
           const data=await api.aiChat(`根據以下已收集資訊，直接以 {"answer":"..."} 回答治療師最初的問題。\n${transcript}\n\n請只輸出 JSON。`, 4096);
+          if(data.reasoning) reasoning+=data.reasoning+'\n';
           let j=null; try{ j=JSON.parse(String(data.text||'').replace(/```json|```/gi,'').trim()); }catch(e){}
           answer=(j && j.answer!=null) ? String(j.answer) : String(data.text||'（未能取得回答，請重試）');
         }
-        gChatMsgs.value.push({role:'assistant', text:answer});
+        gChatMsgs.value.push({role:'assistant', text:answer, steps:steps.length?steps:undefined, reasoning:reasoning.trim()||undefined});
+        gChatStatus.value='';
       }catch(e){
         gChatMsgs.value.push({role:'assistant', text:'⚠️ '+e.message});
       }

@@ -49,6 +49,12 @@
   .ai-fab:hover{transform:scale(1.07)}
   .ai-panel{position:fixed;right:24px;bottom:88px;z-index:300;width:390px;height:520px;background:#fff;border:1px solid var(--el-border-color-lighter);border-radius:14px;box-shadow:0 12px 40px rgba(16,42,84,.24);padding:14px;display:flex;flex-direction:column;gap:10px}
   .ai-hd{display:flex;align-items:center;gap:8px}
+  .ai-trace{cursor:pointer;font-size:12px;color:var(--el-text-color-secondary);margin-bottom:6px;user-select:none}
+  .ai-trace:hover{color:var(--el-color-primary)}
+  .ai-trace-body{margin:-2px 0 8px;border-left:2px solid var(--el-color-primary-light-7);padding-left:10px;display:flex;flex-direction:column;gap:8px}
+  .ai-step-t{font-size:12px;font-weight:600;color:var(--el-text-color-regular)}
+  .ai-step-t .ai-args{font-weight:400;color:var(--el-text-color-secondary);word-break:break-all}
+  .ai-step pre{margin:4px 0 0;white-space:pre-wrap;word-break:break-word;font-size:11.5px;line-height:1.6;background:#f4f6fa;border-radius:6px;padding:8px 10px;max-height:200px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace}
 
   /* ══ 兒童資料列 ══ */
   .el-header.metabar{background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--el-border-color-lighter);box-shadow:0 1px 6px rgba(16,42,84,.05);height:auto!important;padding:12px 32px;position:sticky;top:0;z-index:100}

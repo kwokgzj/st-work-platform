@@ -136,13 +136,13 @@ def test_ai_chat_wiring(monkeypatch=None):
     client.put("/api/settings/ai", json={"type": "openai", "base": "https://x/v1", "key": "k", "model": "m"})
 
     orig = ai_mod.call_llm
-    ai_mod.call_llm = lambda cfg, prompt, max_tokens=4000: "好的"
+    ai_mod.call_llm = lambda cfg, prompt, max_tokens=16384: {"text": "好的", "reasoning": ""}
     try:
         r = client.post("/api/ai/chat", json={"prompt": "hi", "max_tokens": 8})
     finally:
         ai_mod.call_llm = orig
     assert r.status_code == 200
-    assert r.json() == {"text": "好的"}
+    assert r.json() == {"text": "好的", "reasoning": ""}
 
 
 if __name__ == "__main__":
