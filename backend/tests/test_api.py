@@ -21,6 +21,11 @@ from app.main import app  # noqa: E402
 
 client = TestClient(app)
 
+# ── 登入預設管理員，後續所有請求自動帶上 Bearer token ──
+_r = client.post("/api/auth/login", json={"username": "admin", "password": "123456"})
+assert _r.status_code == 200, "預設管理員登入失敗"
+client.headers["Authorization"] = "Bearer " + _r.json()["token"]
+
 CHILD = {
     "id": "c1698000000000",
     "name": "小明",
@@ -104,7 +109,7 @@ def test_persistence_across_reopened_connection():
         n_children = conn.execute("SELECT COUNT(*) FROM children").fetchone()[0]
         n_seeds = conn.execute("SELECT COUNT(*) FROM seeds").fetchone()[0]
         ai_cfg = json.loads(conn.execute(
-            "SELECT value FROM app_settings WHERE key='ai'").fetchone()[0])
+            "SELECT value FROM app_settings WHERE key LIKE 'ai:%'").fetchone()[0])
     finally:
         conn.close()
     assert n_children == 1
@@ -143,6 +148,46 @@ def test_ai_chat_wiring(monkeypatch=None):
         ai_mod.call_llm = orig
     assert r.status_code == 200
     assert r.json() == {"text": "好的", "reasoning": ""}
+
+
+def test_user_isolation():
+    # 註冊第二個用戶 → 看不到管理員的檔案
+    r = client.post("/api/auth/register", json={"username": "t2", "display_name": "治療師二", "password": "abcdef"})
+    assert r.status_code == 200
+    tok2 = r.json()["token"]
+    assert client.get("/api/records", headers={"Authorization": "Bearer " + tok2}).json() == []
+    rid = client.get("/api/records").json()[0]["id"]
+    assert client.get(f"/api/records/{rid}", headers={"Authorization": "Bearer " + tok2}).status_code == 404
+    assert client.put(f"/api/records/{rid}", json=CHILD, headers={"Authorization": "Bearer " + tok2}).status_code == 404
+
+    # 用戶二自己建檔 → 自己可見、管理員不可見
+    r = client.post("/api/records", json={**CHILD, "id": "c_iso"},
+                    headers={"Authorization": "Bearer " + tok2})
+    assert r.status_code == 201
+    assert [x["id"] for x in client.get("/api/records", headers={"Authorization": "Bearer " + tok2}).json()] == ["c_iso"]
+    assert "c_iso" not in [x["id"] for x in client.get("/api/records").json()]
+    client.delete("/api/records/c_iso", headers={"Authorization": "Bearer " + tok2})
+
+    # 未登入（全新無 header 的客戶端）→ 401
+    from fastapi.testclient import TestClient as TC
+    assert TC(app).get("/api/records").status_code == 401
+
+    # 管理員用戶管理：列表含新用戶；非管理員被拒
+    users = client.get("/api/users").json()
+    assert any(u["username"] == "t2" for u in users)
+    assert client.get("/api/users", headers={"Authorization": "Bearer " + tok2}).status_code == 403
+    uid2 = next(u["id"] for u in users if u["username"] == "t2")
+    assert client.put(f"/api/users/{uid2}", json={"password": "fedcba"}).status_code == 200
+    assert client.post("/api/auth/login", json={"username": "t2", "password": "fedcba"}).status_code == 200
+    # 不能停用/刪除自己
+    me_id = client.get("/api/auth/me").json()["id"]
+    assert client.put(f"/api/users/{me_id}", json={"disabled": 1}).status_code == 400
+    assert client.delete(f"/api/users/{me_id}").status_code == 400
+    # 刪除用戶 → 其檔案一併清除
+    client.post("/api/records", json={**CHILD, "id": "c_t2"}, headers={"Authorization": "Bearer " + tok2})
+    assert client.delete(f"/api/users/{uid2}").status_code == 200
+    assert all(u["username"] != "t2" for u in client.get("/api/users").json())
+    assert all(x["id"] != "c_t2" for x in client.get("/api/records").json())
 
 
 if __name__ == "__main__":

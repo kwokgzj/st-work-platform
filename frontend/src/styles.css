@@ -152,3 +152,9 @@
     body.compact .st.s0{display:none}
     .el-main .el-card{box-shadow:none;break-inside:avoid}
   }
+
+  /* ══ 登入頁 ══ */
+  .login-mask{position:fixed;inset:0;z-index:1000;background:linear-gradient(135deg,#16263f,#2e5e9e);display:flex;align-items:center;justify-content:center}
+  .login-card{background:#fff;border-radius:16px;padding:26px 30px 18px;width:360px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .login-logo{width:44px;height:44px;border-radius:10px;background:var(--el-color-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:2px}
+  .login-card .el-tabs{width:100%;margin-top:10px}

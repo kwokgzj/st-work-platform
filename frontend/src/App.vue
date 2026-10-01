@@ -1,6 +1,34 @@
 <template>
   <el-container class="app-shell">
 
+    <!-- ═══════ 登入／註冊 ═══════ -->
+    <div class="login-mask no-print" v-if="!me">
+      <div class="login-card">
+        <div class="login-logo">ST</div>
+        <b style="font-size:17px">言語治療工作平台</b>
+        <div class="note" style="margin:0 0 4px">學前兒童口語評估量表（0–6 歲）</div>
+        <el-tabs v-model="loginTab" stretch>
+          <el-tab-pane label="登錄" name="in">
+            <el-form label-width="70px" @submit.prevent>
+              <el-form-item label="帳號"><el-input v-model="loginForm.username" placeholder="帳號" @keyup.enter="doLogin"></el-input></el-form-item>
+              <el-form-item label="密碼"><el-input v-model="loginForm.password" type="password" show-password placeholder="密碼" @keyup.enter="doLogin"></el-input></el-form-item>
+              <el-button type="primary" style="width:100%" :loading="loginBusy" @click="doLogin">登錄</el-button>
+            </el-form>
+          </el-tab-pane>
+          <el-tab-pane label="註冊" name="up">
+            <el-form label-width="70px" @submit.prevent>
+              <el-form-item label="帳號"><el-input v-model="regForm.username"></el-input></el-form-item>
+              <el-form-item label="姓名"><el-input v-model="regForm.display_name" placeholder="治療師姓名"></el-input></el-form-item>
+              <el-form-item label="密碼"><el-input v-model="regForm.password" type="password" show-password placeholder="至少 6 位"></el-input></el-form-item>
+              <el-form-item label="確認"><el-input v-model="regForm.password2" type="password" show-password @keyup.enter="doRegister"></el-input></el-form-item>
+              <el-button type="primary" style="width:100%" :loading="loginBusy" @click="doRegister">註冊並登入</el-button>
+            </el-form>
+          </el-tab-pane>
+        </el-tabs>
+        <div class="note" style="margin:8px 0 0;text-align:center">首次使用：帳號 admin／密碼 123456</div>
+      </div>
+    </div>
+
     <!-- ═══════ 左側菜單欄 ═══════ -->
     <aside class="sidebar no-print">
       <div class="brand">
@@ -27,13 +55,14 @@
           設置
         </a>
       </nav>
-      <div class="me" v-if="curChild">
-        <div class="avatar">{{ (curChild.name||'·').slice(0,1) }}</div>
-        <div><b>{{ curChild.name }}</b><span>目前兒童・{{ ageLabel }}</span></div>
+      <div class="me" v-if="me">
+        <div class="avatar">{{ (me.display_name||me.username||'?').slice(0,1) }}</div>
+        <div style="flex:1;min-width:0"><b>{{ me.display_name||me.username }}</b><span>{{ me.role==='admin'?'管理員':'言語治療師' }}</span></div>
+        <el-button link size="small" style="color:#9fb0c9" @click="doLogout">退出</el-button>
       </div>
       <div class="me" v-else>
-        <div class="avatar">—</div>
-        <div><b>未選擇兒童</b><span>請先於「兒童檔案」選擇</span></div>
+        <div class="avatar">?</div>
+        <div><b>未登入</b><span>請先登入</span></div>
       </div>
     </aside>
 
@@ -449,8 +478,9 @@
         </el-select>
       </template>
     </el-table-column>
-    <el-table-column label="" width="110" align="center">
+    <el-table-column label="" width="150" align="center">
       <template #default="{row}">
+        <el-button link type="primary" size="small" @click="openSess(row)">回溯</el-button>
         <el-popconfirm title="刪除此記錄？" @confirm="delSession(row.id)">
           <template #reference><el-button link type="danger" size="small">刪除</el-button></template>
         </el-popconfirm>
@@ -498,6 +528,34 @@
 
         <!-- ═══════ 4. 設置 ═══════ -->
         <section v-show="curPage==='settings'">
+          <el-card shadow="never" v-if="me && me.role==='admin'">
+            <template #header>
+              <b>用戶管理</b><span class="sub-hint">不同用戶的兒童檔案、評估與干預數據相互隔離；種子庫為平台共享</span>
+              <el-button size="small" type="primary" style="float:right" @click="usersDlg=true">＋ 新增用戶</el-button>
+            </template>
+            <el-table :data="users" size="small" border>
+              <el-table-column label="用戶" min-width="130">
+                <template #default="{row}"><b>{{ row.display_name||row.username }}</b><el-tag v-if="me && row.username===me.username" size="small" effect="plain" style="margin-left:6px">我</el-tag></template>
+              </el-table-column>
+              <el-table-column prop="username" label="帳號" width="110"></el-table-column>
+              <el-table-column label="角色" width="110">
+                <template #default="{row}"><el-tag :type="row.role==='admin'?'danger':'primary'" size="small" effect="plain">{{ row.role==='admin'?'管理員':'言語治療師' }}</el-tag></template>
+              </el-table-column>
+              <el-table-column label="狀態" width="80">
+                <template #default="{row}"><el-tag :type="row.disabled?'info':'success'" size="small" effect="plain">{{ row.disabled?'停用':'啟用' }}</el-tag></template>
+              </el-table-column>
+              <el-table-column prop="created_at" label="建立時間" width="170"></el-table-column>
+              <el-table-column label="操作" width="240" align="center">
+                <template #default="{row}">
+                  <el-button link type="primary" size="small" @click="resetPw(row)">重置密碼</el-button>
+                  <el-button link size="small" :type="row.disabled?'success':'warning'" :disabled="me && row.username===me.username" @click="toggleU(row)">{{ row.disabled?'啟用':'停用' }}</el-button>
+                  <el-popconfirm title="刪除該用戶並清除其全部數據？" width="240" @confirm="delU(row)">
+                    <template #reference><el-button link type="danger" size="small" :disabled="me && row.username===me.username">刪除</el-button></template>
+                  </el-popconfirm>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-card>
           <el-card shadow="never">
             <template #header><b>AI 設定</b><span class="sub-hint">干預方案 AI 生成與對話修改所用的 LLM 連線</span></template>
             <p class="note" style="margin-top:0">API 金鑰儲存於後端伺服器，不存於瀏覽器；未設定時仍可用「依種子庫生成」方案。</p>
@@ -551,6 +609,64 @@
   <template #footer>
     <el-button @click="ncDlg=false">取消</el-button>
     <el-button type="primary" @click="addChild">建立</el-button>
+  </template>
+</el-dialog>
+
+<!-- 新增用戶 -->
+<el-dialog v-model="usersDlg" title="新增用戶" width="440px">
+  <el-form label-width="80px">
+    <el-form-item label="帳號" required><el-input v-model="nu.username"></el-input></el-form-item>
+    <el-form-item label="姓名"><el-input v-model="nu.display_name" placeholder="治療師姓名"></el-input></el-form-item>
+    <el-form-item label="密碼" required><el-input v-model="nu.password" type="password" show-password placeholder="至少 6 位"></el-input></el-form-item>
+    <el-form-item label="角色">
+      <el-select v-model="nu.role" style="width:100%">
+        <el-option label="言語治療師" value="therapist"></el-option>
+        <el-option label="管理員" value="admin"></el-option>
+      </el-select>
+    </el-form-item>
+  </el-form>
+  <template #footer>
+    <el-button @click="usersDlg=false">取消</el-button>
+    <el-button type="primary" @click="createU">建立</el-button>
+  </template>
+</el-dialog>
+
+<!-- 課程記錄回溯 -->
+<el-dialog v-model="sessDlg" :title="'課程記錄回溯'+(sessDetail?' — 第 '+sessDetail.no+' 次':'')" width="780px" top="5vh">
+  <template v-if="sessDetail">
+    <el-descriptions :column="4" size="small" border style="margin-bottom:12px">
+      <el-descriptions-item label="日期">{{ sessDetail.date||'—' }}</el-descriptions-item>
+      <el-descriptions-item label="關聯評估">{{ assessById(sessDetail.assessId)?.adate || '—' }}</el-descriptions-item>
+      <el-descriptions-item label="效果">{{ sessDetail.effect?.level||'待評' }}</el-descriptions-item>
+      <el-descriptions-item label="遊戲數">{{ (sessDetail.games||[]).length }}</el-descriptions-item>
+    </el-descriptions>
+    <el-alert v-if="!sessDetail.planSnapshot && !sessDetail.goalsFull" type="info" :closable="false"
+      title="此記錄為最早的簡化數據，僅存訓練目標文字，無法完整回溯。" style="margin-bottom:10px"></el-alert>
+    <template v-if="sessDetail.planSnapshot">
+      <div class="grp-h" style="margin-top:0">方案版本（儲存時快照）</div>
+      <div class="ver-list" style="margin-bottom:12px">
+        <button v-for="(v,i) in sessDetail.planSnapshot.versions" :key="i" :class="['ver',{on:i===sessVerIdx}]" @click="sessVerIdx=i">{{ v.label }}</button>
+      </div>
+    </template>
+    <div class="grp-h">訓練目標與遊戲</div>
+    <div v-for="(g,gi) in sessGoals()" :key="gi" style="margin-bottom:12px">
+      <b>目標 {{ gi+1 }}：</b>{{ g.text||'(未填寫)' }}
+      <div v-for="(gm,gmi) in g.games||[]" :key="gmi" style="margin:6px 0 0 18px;font-size:13px">
+        ▪ <b>{{ gm.name }}</b>（{{ DOM_NAME[gm.domain]||gm.domain }}）─ 目標：{{ gm.target }}｜玩法：{{ gm.desc }}
+      </div>
+      <div v-if="!(g.games||[]).length" class="note" style="margin:4px 0 0 18px">（此目標未採用遊戲）</div>
+    </div>
+    <div v-if="!sessDetail.planSnapshot && !(sessDetail.goalsFull||[]).length && (sessDetail.games||[]).length">
+      <div class="grp-h">遊戲（扁平記錄）</div>
+      <div style="font-size:13px">▪ {{ sessDetail.games.map(g=>g.name).join('、') }}</div>
+    </div>
+    <template v-if="sessDetail.planSnapshot">
+      <el-divider content-position="left">AI 對話紀錄</el-divider>
+      <div class="chat-box" style="height:220px">
+        <div v-for="(m,mi) in sessDetail.planSnapshot.chat||[]" :key="mi" :class="['msg',m.role]">{{ m.text }}</div>
+        <div v-if="!(sessDetail.planSnapshot.chat||[]).length" class="note" style="margin:0">無 AI 對話紀錄（種子庫直接生成）</div>
+      </div>
+    </template>
   </template>
 </el-dialog>
 
@@ -1167,15 +1283,32 @@ const stim     = reactive(stimD);
 
     async function saveSession(){
       const v=curVer(); if(!plan.value||!curChild.value||!v) return;
-      const goals=v.goals.map(g=>({text:g.text, games:g.games.filter(x=>x.checked)}));
+      const goals=v.goals.map(g=>({text:g.text, games:g.games.filter(x=>x.checked).map(x=>({...x}))}));
       curChild.value.sessions.push({
         id:Date.now(), no:plan.value.no, date:plan.value.date,
         assessId:plan.value.assessId||intervAssessId.value||null,
-        goals:goals.map(g=>g.text),
-        games:goals.flatMap(g=>g.games.map(gm=>({...gm}))),
+        goals:goals.map(g=>g.text),                          // 舊欄位：列表顯示用
+        games:goals.flatMap(g=>g.games.map(gm=>({...gm}))),   // 舊欄位：列表顯示用
+        goalsFull:goals,                                     // 完整結構：目標→遊戲對應
+        planSnapshot:{                                       // 完整快照：可回溯
+          no:plan.value.no, date:plan.value.date,
+          assessId:plan.value.assessId||intervAssessId.value||null,
+          versions:JSON.parse(JSON.stringify(plan.value.versions)),
+          curIdx:plan.value.curIdx,
+          chat:JSON.parse(JSON.stringify(plan.value.chat||[]))
+        },
         homeTip:plan.value.homeTip||'', effect:{level:'待評', note:''}
       });
-      if(await saveCurChild()) ElementPlus.ElMessage.success('已儲存為第 '+plan.value.no+' 次課程記錄');
+      if(await saveCurChild()) ElementPlus.ElMessage.success('已儲存為第 '+plan.value.no+' 次課程記錄（含完整方案快照，可回溯）');
+    }
+    // ── 課程回溯 ──
+    const sessDlg=ref(false), sessDetail=ref(null), sessVerIdx=ref(0);
+    function openSess(row){ sessDetail.value=row; sessVerIdx.value=row.planSnapshot?row.planSnapshot.curIdx:0; sessDlg.value=true; }
+    function sessGoals(){
+      const d=sessDetail.value; if(!d) return [];
+      if(d.planSnapshot){ const v=d.planSnapshot.versions[d.planSnapshot.curIdx]||d.planSnapshot.versions[0]; return (v&&v.goals)||[]; }
+      if(d.goalsFull) return d.goalsFull;
+      return (d.goals||[]).map(t=>({text:t, games:[]}));   // 最舊數據：僅目標文字
     }
     function delSession(id){
       const c=curChild.value; if(!c) return;
@@ -1367,7 +1500,17 @@ const stim     = reactive(stimD);
       ['plas_children','plas_seeds','plas_ai'].forEach(k=>localStorage.removeItem(k));
       ElementPlus.ElMessage.success('舊版本地數據已導入伺服器');
     }
-    (async function init(){
+    // ── 登入與初始化 ──
+    const me = ref(null);
+    const loginTab  = ref('in');
+    const loginBusy = ref(false);
+    const loginForm = reactive({username:'', password:''});
+    const regForm   = reactive({username:'', display_name:'', password:'', password2:''});
+    const users     = ref([]);
+    const usersDlg  = ref(false);
+    const nu        = reactive({username:'', display_name:'', password:'', role:'therapist'});
+
+    async function afterLogin(){
       await importLegacy();
       try{
         let ss=await api.getSeeds();
@@ -1376,6 +1519,65 @@ const stim     = reactive(stimD);
         const ai=await api.getAi(); if(ai) Object.assign(aiCfg, ai);
         if(!aiCfg.thinking) aiCfg.thinking='off';   // 舊配置默認關閉思考，避免推理耗盡輸出
         await refreshChildren();
-      }catch(e){ console.warn('後端未就緒：', e.message); }
+        if(me.value && me.value.role==='admin') await refreshUsers();
+      }catch(e){ console.warn('初始化失敗：', e.message); }
+    }
+    async function doLogin(){
+      if(!loginForm.username.trim() || !loginForm.password){ ElementPlus.ElMessage.warning('請輸入帳號與密碼'); return; }
+      loginBusy.value=true;
+      try{
+        const res=await api.login({username:loginForm.username, password:loginForm.password});
+        me.value=res.user; loginForm.password='';
+        ElementPlus.ElMessage.success('歡迎，'+(me.value.display_name||me.value.username));
+        await afterLogin();
+      }catch(e){ ElementPlus.ElMessage.error(e.message); }
+      loginBusy.value=false;
+    }
+    async function doRegister(){
+      if(regForm.password!==regForm.password2){ ElementPlus.ElMessage.warning('兩次密碼不一致'); return; }
+      loginBusy.value=true;
+      try{
+        const res=await api.register({username:regForm.username, display_name:regForm.display_name, password:regForm.password});
+        me.value=res.user;
+        ElementPlus.ElMessage.success('註冊完成，已登入');
+        await afterLogin();
+      }catch(e){ ElementPlus.ElMessage.error(e.message); }
+      loginBusy.value=false;
+    }
+    async function doLogout(){
+      try{ await api.logout(); }catch(e){}
+      me.value=null; users.value=[];
+      children.splice(0, children.length);
+      curChildId.value=null; curAssessId.value=null; intervAssessId.value=null;
+      plan.value=null; repHtml.value=''; assessMode.value='view';
+      gChatMsgs.value=[]; chatOpen.value=false;
+      ElementPlus.ElMessage.success('已登出');
+    }
+    async function refreshUsers(){ try{ users.value=await api.listUsers(); }catch(e){} }
+    async function createU(){
+      if(!nu.username.trim() || !nu.password){ ElementPlus.ElMessage.warning('帳號與密碼必填'); return; }
+      try{ await api.createUser({username:nu.username, display_name:nu.display_name, password:nu.password, role:nu.role});
+        usersDlg.value=false; nu.username=''; nu.display_name=''; nu.password='';
+        await refreshUsers(); ElementPlus.ElMessage.success('用戶已建立');
+      }catch(e){ ElementPlus.ElMessage.error(e.message); }
+    }
+    function resetPw(u){
+      ElementPlus.ElMessageBox.prompt('為「'+(u.display_name||u.username)+'」設置新密碼（至少 6 位）', '重置密碼',
+        {inputType:'password', inputPattern:/.{6,}/, inputErrorMessage:'密碼至少 6 位'})
+        .then(async ({value})=>{ try{ await api.updateUser(u.id, {password:value}); ElementPlus.ElMessage.success('密碼已重置'); }catch(e){ ElementPlus.ElMessage.error(e.message); } })
+        .catch(()=>{});
+    }
+    async function toggleU(u){ try{ await api.updateUser(u.id, {disabled:u.disabled?0:1}); await refreshUsers(); }catch(e){ ElementPlus.ElMessage.error(e.message); } }
+    async function delU(u){
+      try{ await api.delUser(u.id); await refreshChildren(); await refreshUsers();
+        if(curChildId.value && !children.some(c=>c.id===curChildId.value)) curChildId.value=null;
+        ElementPlus.ElMessage.success('已刪除');
+      }catch(e){ ElementPlus.ElMessage.error(e.message); }
+    }
+    (async function initAuth(){
+      try{
+        const u=await api.me();
+        if(u && u.username){ me.value=u; await afterLogin(); }
+      }catch(e){ /* 未登入 → 顯示登入頁 */ }
     })();
 </script>

@@ -1,11 +1,13 @@
 """SQLite 连接与迁移：WAL、busy_timeout、建表、user_version 迁移。
 
 数据落位对应原 localStorage 三份数据：
-- plas_children → children（儿童档案，整份 JSON）
-- plas_seeds    → seeds（干预种子库，整组读写）
-- plas_ai       → app_settings（key='ai'）
+- plas_children → children（儿童档案，整份 JSON，按用户隔离）
+- plas_seeds    → seeds（干预种子库，整组读写，平台共享）
+- plas_ai       → app_settings（key='ai:<user_id>'，按用户隔离）
 """
+import hashlib
 import os
+import secrets
 import sqlite3
 from contextlib import closing
 from pathlib import Path
@@ -51,6 +53,10 @@ def db_path() -> str:
     return _DB_PATH
 
 
+def hash_pw(password: str, salt_hex: str) -> str:
+    return hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(salt_hex), 100_000).hex()
+
+
 def init_db() -> None:
     """建表 + user_version 迁移。应用导入时调用一次。"""
     with closing(get_conn()) as conn:
@@ -58,4 +64,36 @@ def init_db() -> None:
         if version < 1:
             conn.executescript(SCHEMA_V1)
             conn.execute("PRAGMA user_version = 1")
+            conn.commit()
+        if version < 2:
+            # ── 用户体系：users + 登录会话 + 档案权属 ──
+            conn.executescript("""
+                CREATE TABLE IF NOT EXISTS users (
+                  id          TEXT PRIMARY KEY,
+                  username    TEXT NOT NULL UNIQUE,
+                  display_name TEXT NOT NULL DEFAULT '',
+                  role        TEXT NOT NULL DEFAULT 'therapist',
+                  pw_salt     TEXT NOT NULL,
+                  pw_hash     TEXT NOT NULL,
+                  disabled    INTEGER NOT NULL DEFAULT 0,
+                  created_at  TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS auth_sessions (
+                  token      TEXT PRIMARY KEY,
+                  user_id    TEXT NOT NULL,
+                  expires_at TEXT NOT NULL
+                );
+            """)
+            conn.execute("ALTER TABLE children ADD COLUMN owner TEXT NOT NULL DEFAULT ''")
+            # 默认管理员 admin / 123456（首登后可在用户管理修改）
+            salt = secrets.token_hex(16)
+            conn.execute(
+                "INSERT OR IGNORE INTO users(id, username, display_name, role, pw_salt, pw_hash, disabled, created_at)"
+                " VALUES(?,?,?,?,?,?,0,datetime('now'))",
+                ("u_admin", "admin", "管理員", "admin", salt, hash_pw("123456", salt)),
+            )
+            conn.execute(
+                "UPDATE children SET owner=(SELECT id FROM users WHERE username='admin') WHERE owner=''"
+            )
+            conn.execute("PRAGMA user_version = 2")
             conn.commit()
